@@ -22,9 +22,6 @@ CARDS = [
     ('stacks', 'Stacks to 254', ['Fish, bugs, dive fish, clams and trash all stack',
                                  'Every stack limit goes up to 254, the game\'s cap',
                                  'Done with romfs edits only (dragonloverlord\'s addition)'], '#6dbb4f'),
-    ('combined', 'Works with ACNH-Combined', ['Keeps Combined\'s doubled Daily rewards and banana names',
-                                              'Combined\'s flower and fruit models stay Combined\'s',
-                                              'One merged size table for all three mods'], '#6dbb4f'),
     ('port', 'From the port', ['All tools are unbreakable',
                                'The new tool and balloon DIYs stay out of hotel delivery requests'], '#6dbb4f'),
     ('not-yet', 'Not working on Peanuts yet', ['The port\'s EventFlow and extra message files, so some new NPC dialogue is missing',
@@ -64,7 +61,7 @@ h1 b {{ color: #4b9435; font-weight: 600; }}
 <span class="kick">ACNH 3.0.3 &middot; PEANUTS NATIVE</span><span class="unoff">UNOFFICIAL BETA</span>
 <h1>Jubbsticks' Additions<br><b>for Peanuts</b></h1>
 <p class="sub">dragonloverlord's unofficial port, running on Android</p>
-<div class="pills"><span>New items</span><span>New NPCs</span><span>Stacks to 254</span><span>Works with Combined</span></div>
+<div class="pills"><span>New items</span><span>New NPCs</span><span>Stacks to 254</span><span>Unbreakable tools</span></div>
 </div></body></html>"""
 
 

@@ -93,7 +93,7 @@
     </div>
     <span class="kicker">Peanuts Native &middot; ACNH 3.0.3</span>
     <h1>Jubbsticks Additions for Peanuts</h1>
-    <p class="sub">Turns dragonloverlord's unofficial Jubbsticks Additions port (UJAP-V0.0.2) into a mod zip for Peanuts Native, tuned to sit next to ACNH-Combined.
+    <p class="sub">Turns dragonloverlord's unofficial Jubbsticks Additions port (UJAP-V0.0.2) into a mod zip for Peanuts Native.
       It all runs in your browser; nothing is uploaded.</p>
   </header>
 
@@ -136,12 +136,12 @@
   <section class="card then">
     <h2><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M30 6C13 16 7 37 18 55c20 2 36-14 36-34C48 11 40 7 30 6z" fill="#6dbb4f"/>
       <path d="M18 55C24 40 31 28 44 16" fill="none" stroke="#4b9435" stroke-width="4" stroke-linecap="round"/></svg>Then, in Peanuts</h2>
-    <p>Open ACNH's settings, then <b>Install mod&hellip; &gt; Zip file</b>, and pick <code>jubbsticks-additions-peanuts.zip</code>.
-      Put it <b>last</b> in the mod order (after ACNH-Combined and QoL). Peanuts rebuilds the game with the mod, which takes about 5 minutes.
-      Start a new game, and back up your save first: this mod adds items.</p>
-    <p>It is made to sit next to ACNH-Combined. It carries a merged size table and item tables that keep Combined's edits
-      (doubled Daily rewards, banana names). Stack sizes are the port's: most stackable items go up to 254. Combined's eight flower and fruit models stay Combined's.
-      The port's EventFlow files, UnitIcon models and extra message files are left out: they hang or crash ACNH 3.0.3 on Peanuts (tested on an AYN Thor). Some new NPC dialogue is missing because of that.</p>
+    <p>Back up your save first: this mod adds items. Open ACNH's settings, then <b>Install mod&hellip; &gt; Zip file</b>, and pick
+      <code>jubbsticks-additions-peanuts.zip</code>. Peanuts rebuilds the game with the mod, which takes about 5 minutes. Then start a new game.</p>
+    <p>It's the port as is, minus what Peanuts can't load yet: the port's EventFlow files, UnitIcon models and extra message files
+      hang or crash ACNH 3.0.3 on Peanuts (tested on an AYN Thor), so some new NPC dialogue is missing. The page also puts back 79 vanilla item names
+      the port's text file lacks, and gives it a size table made for 3.0.3.</p>
+    <p>Other mods that replace the same files (item tables, item names, the size table) will clash with it.</p>
   </section>
 
   <section class="card then">
@@ -608,7 +608,7 @@ if (typeof document !== 'undefined') {
       const r = await build(new Uint8Array(await $('mod').files[0].arrayBuffer()), patch, d => fzstd.decompress(d));
       const a = document.createElement('a');
       a.href = URL.createObjectURL(r.zip); a.download = 'jubbsticks-additions-peanuts.zip'; document.body.append(a); a.click(); a.remove();
-      status(`Done: jubbsticks-additions-peanuts.zip (${(r.zip.size / 1048576).toFixed(1)} MB, ${r.romfs} files). Install it in Peanuts, last in the mod order.`, 'ok');
+      status(`Done: jubbsticks-additions-peanuts.zip (${(r.zip.size / 1048576).toFixed(1)} MB, ${r.romfs} files). Install it in Peanuts.`, 'ok');
     } catch (e) { status(e.message, 'err'); }
     ready();
   };

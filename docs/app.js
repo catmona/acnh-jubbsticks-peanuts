@@ -441,7 +441,7 @@ if (typeof document !== 'undefined') {
       const r = await build(new Uint8Array(await $('mod').files[0].arrayBuffer()), patch, d => fzstd.decompress(d));
       const a = document.createElement('a');
       a.href = URL.createObjectURL(r.zip); a.download = 'jubbsticks-additions-peanuts.zip'; document.body.append(a); a.click(); a.remove();
-      status(`Done: jubbsticks-additions-peanuts.zip (${(r.zip.size / 1048576).toFixed(1)} MB, ${r.romfs} files). Install it in Peanuts, last in the mod order.`, 'ok');
+      status(`Done: jubbsticks-additions-peanuts.zip (${(r.zip.size / 1048576).toFixed(1)} MB, ${r.romfs} files). Install it in Peanuts.`, 'ok');
     } catch (e) { status(e.message, 'err'); }
     ready();
   };

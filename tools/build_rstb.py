@@ -1,4 +1,4 @@
-"""Usage: build_rstb.py <base table (Combined's 3.0.3 table)> <port table> <romfs dir> <out>
+"""Usage: build_rstb.py <base table (vanilla 3.0.3, from your own game)> <port table> <romfs dir> <out>
 Base + raised sizes for every file in romfs that has an entry; entries for files that have none are copied from the port's own table if it has one."""
 import sys,os,zlib,struct,zstandard; sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
 import yaz0,parse
