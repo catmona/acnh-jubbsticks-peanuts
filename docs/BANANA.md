@@ -53,8 +53,9 @@ str  w8, [x20]
 
 ## Checks
 
-- Nothing else in `main` branches into the 9 rewritten words. The only branch is the `cbz` itself, which the patch re-aims.
-- The getter only reads memory, so calling it once instead of twice changes nothing else.
+- No direct branch anywhere in `main`'s code (up to 0x40d6000) lands inside the 9 rewritten words, and no pointer in `main` points there. The only branch in is the `cbz` itself, which the patch re-aims.
+- The getter writes only to its own stack, and its one callee (`0x1a03610`) is a table lookup, so calling it once instead of twice changes nothing else.
+- The function holding the check (`0x113b020`) has 10 callers, so like the 2.0.6 patch this covers every place that asks for a tree's fruit count. The three other places that load 0x8f0 are not fruit-count code (a struct offset, a bit mask and an item argument).
 - I ran the old and new code in Unicorn against the real 3.0.3 `main` for apple, orange, cherry, peach, pear, coconut, banana, the getter's special ids and a NULL count pointer. Only the banana count changes (3 to 2). `w0` and `x19` reach the following code with the same values.
 - None of the QoL port's 152 hook sites in `main` is within 4 KB.
 - Not run in a game yet: not on Switch, and not on Peanuts. Atmosphere cheats don't apply on Peanuts. Whether Peanuts applies this IPS next to another mod's IPS for the same `main` is also untested.
