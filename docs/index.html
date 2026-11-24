@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#cfe8b6">
+<title>Jubbsticks Additions for Peanuts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: light;
+          --grass: #cfe8b6; --leaf: #6dbb4f; --leaf-dark: #4b9435; --cream: #fffaeb; --cream-2: #f6eed3;
+          --bark: #6b5236; --bark-soft: #95805f; --line: #e6dbbb; --tag: #f2a541; --sky: #7ccfd8;
+          --ok: #3f8f2e; --err: #c8493d; }
+  * { box-sizing: border-box; }
+  html { background: var(--grass); }
+  body { margin: 0; min-height: 100vh; color: var(--bark); font: 500 16px/1.55 Nunito, system-ui, sans-serif;
+         background-color: var(--grass);
+         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23b9dc9b'%3E%3Cpath d='M30 12c-9 6-11 17-5 26 9 0 15-8 14-18-2-4-5-7-9-8z'/%3E%3Cpath d='M90 72c-9 6-11 17-5 26 9 0 15-8 14-18-2-4-5-7-9-8z' transform='rotate(35 90 85)'/%3E%3C/g%3E%3Cg fill='%23ffffff' opacity='.45'%3E%3Ccircle cx='88' cy='22' r='3'/%3E%3Ccircle cx='24' cy='88' r='3'/%3E%3C/g%3E%3C/svg%3E"); }
+  main { max-width: 36rem; margin: 0 auto; padding: 28px 16px 40px; }
+  h1, h2, .num, .tag, button, .pill { font-family: Fredoka, Nunito, system-ui, sans-serif; font-weight: 600; }
+  a { color: var(--leaf-dark); font-weight: 700; text-decoration-thickness: 2px; text-underline-offset: 2px; }
+  code { font: 700 .86em ui-monospace, Consolas, monospace; background: var(--cream-2); padding: 1px 6px; border-radius: 6px;
+         overflow-wrap: anywhere; }
+  p { margin: 0 0 10px; }
+
+  header { text-align: center; margin-bottom: 22px; }
+  .badge { width: 76px; height: 76px; margin: 0 auto 10px; display: grid; place-items: center; border-radius: 50%;
+           background: var(--cream); box-shadow: 0 4px 0 var(--line), 0 10px 24px rgba(75, 110, 50, .18); }
+  .badge svg { width: 48px; height: 48px; animation: sway 4s ease-in-out infinite; transform-origin: 30% 90%; }
+  @keyframes sway { 50% { transform: rotate(-8deg); } }
+  .kicker { display: inline-block; margin-bottom: 8px; padding: 2px 12px; border-radius: 999px; background: var(--leaf);
+            color: #fff; font: 700 .8rem/1.6 Nunito, sans-serif; letter-spacing: .04em; }
+  h1 { margin: 0 0 8px; font-size: clamp(1.6rem, 6vw, 2.1rem); line-height: 1.15; color: var(--bark); }
+  .sub { max-width: 30rem; margin: 0 auto; color: var(--bark-soft); }
+
+  .card { position: relative; background: var(--cream); border-radius: 26px; padding: 18px 20px;
+          box-shadow: 0 5px 0 var(--line), 0 14px 30px rgba(75, 110, 50, .15); }
+  ol.steps { list-style: none; margin: 0 0 22px; padding: 0; display: grid; gap: 16px; }
+  .step { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; }
+  .num { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-size: 1.2rem;
+         background: var(--leaf); color: #fff; box-shadow: 0 3px 0 var(--leaf-dark); transition: background .2s; }
+  .step.done .num { background: var(--sky); box-shadow: 0 3px 0 #4fa7b1; }
+  h2 { margin: 4px 0 6px; font-size: 1.15rem; }
+
+  .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 10px; cursor: pointer; }
+  .sr { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip-path: inset(50%); }
+  .pill { padding: 8px 18px; border-radius: 999px; background: #fff; color: var(--leaf-dark); border: 2px solid var(--leaf);
+          box-shadow: 0 3px 0 var(--leaf); font-size: 1rem; transition: transform .1s; }
+  .pick:hover .pill { background: #f3fbe9; }
+  .pick:active .pill { transform: translateY(2px); box-shadow: 0 1px 0 var(--leaf); }
+  .pick:focus-within .pill { outline: 3px solid var(--tag); outline-offset: 2px; }
+  .fname { color: var(--bark-soft); font-size: .92rem; overflow-wrap: anywhere; min-width: 0; }
+  .step.done .fname { color: var(--ok); font-weight: 800; }
+  .step.done .fname::before { content: "\2713  "; }
+
+  button { width: 100%; margin-top: 4px; padding: 14px; font-size: 1.15rem; color: #fff; background: var(--leaf);
+           border: 0; border-radius: 999px; box-shadow: 0 5px 0 var(--leaf-dark); cursor: pointer; transition: transform .1s, box-shadow .1s; }
+  button:hover:not(:disabled) { background: #77c659; }
+  button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--leaf-dark); }
+  button:focus-visible { outline: 3px solid var(--tag); outline-offset: 3px; }
+  button:disabled { background: #c9c2a8; box-shadow: 0 5px 0 #aaa185; cursor: default; }
+
+  .card.dialog { margin-top: 28px; padding: 26px 40px 22px 24px; border-radius: 34px / 30px; }
+  .tag { position: absolute; top: -15px; left: 22px; padding: 3px 16px; border-radius: 999px; background: var(--tag);
+         color: #fff; font-size: .95rem; transform: rotate(-4deg); box-shadow: 0 3px 0 #d0852a; }
+  #status { margin: 0; min-height: 1.6em; white-space: pre-wrap; font-weight: 700; }
+  #status.ok { color: var(--ok); } #status.err { color: var(--err); }
+  .dialog::after { content: ""; position: absolute; right: 22px; bottom: 12px; border: 7px solid transparent;
+                   border-top: 9px solid var(--tag); border-bottom: 0; animation: bob 1.2s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(3px); } }
+
+  .then { margin-top: 18px; }
+  .then h2 { display: flex; align-items: center; gap: 8px; }
+  .then svg { width: 22px; height: 22px; flex: none; }
+  footer { margin-top: 22px; text-align: center; color: var(--bark-soft); font-size: .9rem; }
+  footer p { margin: 0 0 4px; }
+
+  @media (max-width: 420px) { .card { padding: 16px; border-radius: 22px; } .step { gap: 12px; } .num { width: 34px; height: 34px; }
+                              .card.dialog { padding: 26px 36px 20px 18px; } }
+  @media (prefers-reduced-motion: reduce) { .badge svg, .dialog::after { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="badge" aria-hidden="true">
+      <svg viewBox="0 0 64 64"><path d="M30 6C13 16 7 37 18 55c20 2 36-14 36-34C48 11 40 7 30 6z" fill="#6dbb4f"/>
+        <path d="M18 55C24 40 31 28 44 16" fill="none" stroke="#4b9435" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M18 55l-6 6" stroke="#8a6a43" stroke-width="4" stroke-linecap="round"/>
+        <path d="M27 40l-7-4M33 31l-6-6M33 31l9 1M27 40l10 2" stroke="#4b9435" stroke-width="2.5" stroke-linecap="round"/></svg>
+    </div>
+    <span class="kicker">Peanuts Native &middot; ACNH 3.0.3</span>
+    <h1>Jubbsticks Additions for Peanuts</h1>
+    <p class="sub">Turns dragonloverlord's unofficial Jubbsticks Additions port (UJAP-V0.0.2) into a mod zip for Peanuts Native, tuned to sit next to ACNH-Combined.
+      It all runs in your browser; nothing is uploaded.</p>
+  </header>
+
+  <ol class="steps">
+    <li class="card step" id="step-mod">
+      <span class="num" aria-hidden="true">1</span>
+      <div>
+        <h2>Get the port</h2>
+        <p>Download <code>UJAP-BetaRelease-V002-Atmosphere.7z</code> from the
+          <a href="https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port/releases">port's Releases</a>
+          (version <code>UJAP-V0.0.2</code>). Don't extract it. Please read his rules there first.</p>
+        <label class="pick"><input class="sr" type="file" id="mod" accept=".7z,.zip">
+          <span class="pill">Pick the .7z</span><span class="fname" id="mod-name">No file yet</span></label>
+      </div>
+    </li>
+    <li class="card step" id="step-patch">
+      <span class="num" aria-hidden="true">2</span>
+      <div>
+        <h2>Get the patch</h2>
+        <p>Download <code>jub-port-patch.json</code> from the
+          <a href="https://github.com/catmona/acnh-jubbsticks-peanuts/releases/latest">latest release</a>.</p>
+        <label class="pick"><input class="sr" type="file" id="patch" accept=".json,application/json">
+          <span class="pill">Pick the patch</span><span class="fname" id="patch-name">No file yet</span></label>
+      </div>
+    </li>
+    <li class="card step">
+      <span class="num" aria-hidden="true">3</span>
+      <div>
+        <h2>Make the zip</h2>
+        <button id="go" disabled>Make the Peanuts zip</button>
+      </div>
+    </li>
+  </ol>
+
+  <div class="card dialog" role="status" aria-live="polite">
+    <span class="tag">Status</span>
+    <p id="status">Pick both files.</p>
+  </div>
+
+  <section class="card then">
+    <h2><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M30 6C13 16 7 37 18 55c20 2 36-14 36-34C48 11 40 7 30 6z" fill="#6dbb4f"/>
+      <path d="M18 55C24 40 31 28 44 16" fill="none" stroke="#4b9435" stroke-width="4" stroke-linecap="round"/></svg>Then, in Peanuts</h2>
+    <p>Open ACNH's settings, then <b>Install mod&hellip; &gt; Zip file</b>, and pick <code>jubbsticks-additions-peanuts.zip</code>.
+      Put it <b>last</b> in the mod order (after ACNH-Combined and QoL). Peanuts rebuilds the game with the mod, which takes about 5 minutes.
+      Start a new game, and back up your save first: this mod adds items.</p>
+    <p>It is made to sit next to ACNH-Combined. It carries a merged size table and item tables that keep Combined's edits
+      (doubled Daily rewards, banana names). Stack sizes are the port's: most stackable items go up to 254. Combined's eight flower and fruit models stay Combined's.
+      The port's EventFlow files, UnitIcon models and extra message files are left out: they hang or crash ACNH 3.0.3 on Peanuts (tested on an AYN Thor). Some new NPC dialogue is missing because of that.</p>
+  </section>
+
+  <section class="card then">
+    <h2><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="#f2a541"/>
+      <path d="M32 18v18M32 44v2" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>Please keep in mind</h2>
+    <p>This is an <b>unofficial beta</b> of an unofficial port. Don't ask Jubbsticks or dragonloverlord for help with this zip:
+      if something breaks on Peanuts, open an issue <a href="https://github.com/catmona/acnh-jubbsticks-peanuts/issues">here</a>.</p>
+    <p>The port is still being fixed, and the patch only fits <code>UJAP-V0.0.2</code>. When a new version of the port comes out,
+      the page refuses it until there's a new patch here.</p>
+    <p>Offline play only, with your own copy of the game.</p>
+  </section>
+
+  <footer>
+    <p><a href="https://github.com/catmona/acnh-jubbsticks-peanuts">Source and details</a> &middot;
+       <a href="https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port">The port</a> &middot;
+       <a href="https://gamebanana.com/mods/579817">Original mod</a></p>
+    <p>A fan-made helper. Not affiliated with Nintendo, Jubbsticks or the port's author. Nothing of the port is hosted here.</p>
+  </footer>
+</main>
+<script>/* fzstd 0.1.1, MIT, (c) 2020 Arjun Barrett */
+!function(f){typeof module!='undefined'&&typeof exports=='object'?module.exports=f():typeof define!='undefined'&&define.amd?define(['fzstd',f]):(typeof self!='undefined'?self:this).fzstd=f()}(function(){var _e={};"use strict";var r=ArrayBuffer,t=Uint8Array,e=Uint16Array,n=Int16Array,a=Uint32Array,s=Int32Array,i=function(r,e,n){if(t.prototype.slice)return t.prototype.slice.call(r,e,n);(null==e||e<0)&&(e=0),(null==n||n>r.length)&&(n=r.length);var a=new t(n-e);return a.set(r.subarray(e,n)),a},o=function(r,e,n,a){if(t.prototype.fill)return t.prototype.fill.call(r,e,n,a);for((null==n||n<0)&&(n=0),(null==a||a>r.length)&&(a=r.length);n<a;++n)r[n]=e;return r},u=function(r,e,n,a){if(t.prototype.copyWithin)return t.prototype.copyWithin.call(r,e,n,a);for((null==n||n<0)&&(n=0),(null==a||a>r.length)&&(a=r.length);n<a;)r[e++]=r[n++]};_e.ZstdErrorCode={InvalidData:0,WindowSizeTooLarge:1,InvalidBlockType:2,FSEAccuracyTooHigh:3,DistanceTooFarBack:4,UnexpectedEOF:5};var h=["invalid zstd data","window size too large (>2046MB)","invalid block type","FSE accuracy too high","match distance too far back","unexpected EOF"],f=function(r,t,e){var n=Error(t||h[r]);if(n.code=r,Error.captureStackTrace&&Error.captureStackTrace(n,f),!e)throw n;return n},l=function(r,t,e){for(var n=0,a=0;n<e;++n)a|=r[t++]<<(n<<3);return a},v=function(r,t){return(r[t]|r[t+1]<<8|r[t+2]<<16|r[t+3]<<24)>>>0},c=function(r,e){var n=r[0]|r[1]<<8|r[2]<<16;if(3126568==n&&253==r[3]){var a=r[4],i=a>>5&1,o=a>>2&1,u=3&a,h=a>>6;8&a&&f(0);var c=6-i,b=3==u?4:u,y=l(r,c,b),p=h?1<<h:i,w=l(r,c+=b,p)+(1==h&&256),g=w;if(!i){var d=1<<10+(r[5]>>3);g=d+(d>>3)*(7&r[5])}g>2145386496&&f(1);var m=new t((1==e?w||g:e?0:g)+12);return m[0]=1,m[4]=4,m[8]=8,{b:c+p,y:0,l:0,d:y,w:e&&1!=e?e:m.subarray(12),e:g,o:new s(m.buffer,0,3),u:w,c:o,m:Math.min(131072,g)}}if(25481893==(n>>4|r[3]<<20))return v(r,4)+8;f(0)},b=function(r){for(var t=0;1<<t<=r;++t);return t-1},y=function(a,s,i){var o=4+(s<<3),u=5+(15&a[s]);u>i&&f(3);for(var h=1<<u,l=h,v=-1,c=-1,y=-1,p=h,w=new r(512+(h<<2)),g=new n(w,0,256),d=new e(w,0,256),m=new e(w,512,h),z=512+(h<<1),E=new t(w,z,h),k=new t(w,z+h);v<255&&l>0;){var A=b(l+1),T=o>>3,x=(1<<A+1)-1,F=(a[T]|a[T+1]<<8|a[T+2]<<16)>>(7&o)&x,S=(1<<A)-1,B=x-l-1,I=F&S;if(I<B?(o+=A,F=I):(o+=A+1,F>S&&(F-=B)),g[++v]=--F,-1==F?(l+=F,E[--p]=v):l-=F,!F)do{var U=o>>3;c=(a[U]|a[U+1]<<8)>>(7&o)&3,o+=2,v+=c}while(3==c)}(v>255||l)&&f(0);for(var D=0,M=(h>>1)+(h>>3)+3,W=h-1,O=0;O<=v;++O){var j=g[O];if(j<1)d[O]=-j;else for(y=0;y<j;++y){E[D]=O;do{D=D+M&W}while(D>=p)}}for(D&&f(0),y=0;y<h;++y){var C=d[E[y]]++,H=k[y]=u-b(C);m[y]=(C<<H)-h}return[o+7>>3,{b:u,s:E,n:k,t:m}]},p=function(r,n){var a=0,s=-1,i=new t(292),u=r[n],h=i.subarray(0,256),l=i.subarray(256,268),v=new e(i.buffer,268);if(u<128){var c=y(r,n+1,6),p=c[1],w=c[0]<<3,g=r[n+=u];g||f(0);for(var d=0,m=0,z=p.b,E=z,k=(++n<<3)-8+b(g);!((k-=z)<w);){var A=k>>3;if(h[++s]=p.s[d+=(r[A]|r[A+1]<<8)>>(7&k)&(1<<z)-1],(k-=E)<w)break;h[++s]=p.s[m+=(r[A=k>>3]|r[A+1]<<8)>>(7&k)&(1<<E)-1],z=p.n[d],d=p.t[d],E=p.n[m],m=p.t[m]}++s>255&&f(0)}else{for(s=u-127;a<s;a+=2){var T=r[++n];h[a]=T>>4,h[a+1]=15&T}++n}var x=0;for(a=0;a<s;++a)(I=h[a])>11&&f(0),x+=I&&1<<I-1;var F=b(x)+1,S=1<<F,B=S-x;for(B&B-1&&f(0),h[s++]=b(B)+1,a=0;a<s;++a){var I;++l[h[a]=(I=h[a])&&F+1-I]}var U=new t(S<<1),D=U.subarray(0,S),M=U.subarray(S);for(v[F]=0,a=F;a>0;--a){var W=v[a];o(M,a,W,v[a-1]=W+l[a]*(1<<F-a))}for(v[0]!=S&&f(0),a=0;a<s;++a){var O=h[a];if(O){var j=v[O];o(D,a,j,v[O]=j+(1<<F-O))}}return[n,{n:M,b:F,s:D}]},w=y(new t([81,16,99,140,49,198,24,99,12,33,196,24,99,102,102,134,70,146,4]),0,6)[1],g=y(new t([33,20,196,24,99,140,33,132,16,66,8,33,132,16,66,8,33,68,68,68,68,68,68,68,68,36,9]),0,6)[1],d=y(new t([32,132,16,66,102,70,68,68,68,68,36,73,2]),0,5)[1],m=function(r,t){for(var e=r.length,n=new s(e),a=0;a<e;++a)n[a]=t,t+=1<<r[a];return n},z=new t(new s([0,0,0,0,16843009,50528770,134678020,202050057,269422093]).buffer,0,36),E=m(z,0),k=new t(new s([0,0,0,0,0,0,0,0,16843009,50528770,117769220,185207048,252579084,16]).buffer,0,53),A=m(k,3),T=function(r,t,e){var n=r.length,a=t.length,s=r[n-1],i=(1<<e.b)-1,o=-e.b;s||f(0);for(var u=0,h=e.b,l=(n<<3)-8+b(s)-h,v=-1;l>o&&v<a;){var c=l>>3;t[++v]=e.s[u=(u<<h|(r[c]|r[c+1]<<8|r[c+2]<<16)>>(7&l))&i],l-=h=e.n[u]}l==o&&v+1==a||f(0)},x=function(r,t,e){var n=6,a=t.length+3>>2,s=a<<1,i=a+s;T(r.subarray(n,n+=r[0]|r[1]<<8),t.subarray(0,a),e),T(r.subarray(n,n+=r[2]|r[3]<<8),t.subarray(a,s),e),T(r.subarray(n,n+=r[4]|r[5]<<8),t.subarray(s,i),e),T(r.subarray(n),t.subarray(i),e)},F=function(r,n,a){var s,u=n.b,h=r[u],l=h>>1&3;n.l=1&h;var v=h>>3|r[u+1]<<5|r[u+2]<<13,c=(u+=3)+v;if(1==l){if(u>=r.length)return;return n.b=u+1,a?(o(a,r[u],n.y,n.y+=v),a):o(new t(v),r[u])}if(!(c>r.length)){if(0==l)return n.b=c,a?(a.set(r.subarray(u,c),n.y),n.y+=v,a):i(r,u,c);if(2==l){var m=r[u],F=3&m,S=m>>2&3,B=m>>4,I=0,U=0;F<2?1&S?B|=r[++u]<<4|(2&S&&r[++u]<<12):B=m>>3:(U=S,S<2?(B|=(63&r[++u])<<4,I=r[u]>>6|r[++u]<<2):2==S?(B|=r[++u]<<4|(3&r[++u])<<12,I=r[u]>>2|r[++u]<<6):(B|=r[++u]<<4|(63&r[++u])<<12,I=r[u]>>6|r[++u]<<2|r[++u]<<10)),++u;var D=a?a.subarray(n.y,n.y+n.m):new t(n.m),M=D.length-B;if(0==F)D.set(r.subarray(u,u+=B),M);else if(1==F)o(D,r[u++],M);else{var W=n.h;if(2==F){var O=p(r,u);I+=u-(u=O[0]),n.h=W=O[1]}else W||f(0);(U?x:T)(r.subarray(u,u+=I),D.subarray(M),W)}var j=r[u++];if(j){255==j?j=32512+(r[u++]|r[u++]<<8):j>127&&(j=j-128<<8|r[u++]);var C=r[u++];3&C&&f(0);for(var H=[g,d,w],L=2;L>-1;--L){var Z=C>>2+(L<<1)&3;if(1==Z){var q=new t([0,0,r[u++]]);H[L]={s:q.subarray(2,3),n:q.subarray(0,1),t:new e(q.buffer,0,1),b:0}}else 2==Z?(u=(s=y(r,u,9-(1&L)))[0],H[L]=s[1]):3==Z&&(n.t||f(0),H[L]=n.t[L])}var G=n.t=H,J=G[0],K=G[1],N=G[2],P=r[c-1];P||f(0);var Q=(c<<3)-8+b(P)-N.b,R=Q>>3,V=0,X=(r[R]|r[R+1]<<8)>>(7&Q)&(1<<N.b)-1,Y=(r[R=(Q-=K.b)>>3]|r[R+1]<<8)>>(7&Q)&(1<<K.b)-1,$=(r[R=(Q-=J.b)>>3]|r[R+1]<<8)>>(7&Q)&(1<<J.b)-1;for(++j;--j;){var _=N.s[X],rr=N.n[X],tr=J.s[$],er=J.n[$],nr=K.s[Y],ar=K.n[Y],sr=1<<nr,ir=sr+((r[R=(Q-=nr)>>3]|r[R+1]<<8|r[R+2]<<16|r[R+3]<<24)>>>(7&Q)&sr-1);R=(Q-=k[tr])>>3;var or=A[tr]+((r[R]|r[R+1]<<8|r[R+2]<<16)>>(7&Q)&(1<<k[tr])-1);R=(Q-=z[_])>>3;var ur=E[_]+((r[R]|r[R+1]<<8|r[R+2]<<16)>>(7&Q)&(1<<z[_])-1);if(R=(Q-=rr)>>3,X=N.t[X]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<rr)-1),R=(Q-=er)>>3,$=J.t[$]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<er)-1),R=(Q-=ar)>>3,Y=K.t[Y]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<ar)-1),ir>3)n.o[2]=n.o[1],n.o[1]=n.o[0],n.o[0]=ir-=3;else{var hr=ir-(0!=ur);hr?(ir=3==hr?n.o[0]-1:n.o[hr],hr>1&&(n.o[2]=n.o[1]),n.o[1]=n.o[0],n.o[0]=ir):ir=n.o[0]}for(L=0;L<ur;++L)D[V+L]=D[M+L];M+=ur;var fr=(V+=ur)-ir;if(fr<0){var lr=-fr,vr=n.e+fr;for(lr>or&&(lr=or),L=0;L<lr;++L)D[V+L]=n.w[vr+L];V+=lr,or-=lr,fr=0}for(L=0;L<or;++L)D[V+L]=D[fr+L];V+=or}if(V!=M)for(;M<D.length;)D[V++]=D[M++];else V=D.length;a?n.y+=V:D=i(D,0,V)}else if(a){if(n.y+=B,M)for(L=0;L<B;++L)D[L]=D[M+L]}else M&&(D=i(D,M));return n.b=c,D}f(2)}},S=function(r,e){if(1==r.length)return r[0];for(var n=new t(e),a=0,s=0;a<r.length;++a){var i=r[a];n.set(i,s),s+=i.length}return n};function B(r,t){for(var e=[],n=+!t,a=0,s=0;r.length;){var i=c(r,n||t);if("object"==typeof i){for(n?(t=null,i.w.length==i.u&&(e.push(t=i.w),s+=i.u)):(e.push(t),i.e=0);!i.l;){var o=F(r,i,t);o||f(5),t?i.e=i.y:(e.push(o),s+=o.length,u(i.w,0,o.length),i.w.set(o,i.w.length-o.length))}a=i.b+4*i.c}else a=i;r=r.subarray(a)}return S(e,s)}_e.decompress=B;var I=function(){function r(r){this.ondata=r,this.c=[],this.l=0,this.z=0}return r.prototype.push=function(r,e){if("number"==typeof this.s){var n=Math.min(r.length,this.s);r=r.subarray(n),this.s-=n}var a=r.length+this.l;if(!this.s){if(e){if(!a)return void this.ondata(new t(0),!0);a<5&&f(5)}else if(a<18)return this.c.push(r),void(this.l=a);if(this.l&&(this.c.push(r),r=S(this.c,a),this.c=[],this.l=0),"number"==typeof(this.s=c(r)))return this.push(r,e)}if("number"!=typeof this.s){if(a<(this.z||3))return e&&f(5),this.c.push(r),void(this.l=a);if(this.l&&(this.c.push(r),r=S(this.c,a),this.c=[],this.l=0),!this.z&&a<(this.z=2&r[this.s.b]?4:3+(r[this.s.b]>>3|r[this.s.b+1]<<5|r[this.s.b+2]<<13)))return e&&f(5),this.c.push(r),void(this.l=a);for(this.z=0;;){var s=F(r,this.s);if(!s){e&&f(5);var i=r.subarray(this.s.b);return this.s.b=0,this.c.push(i),void(this.l+=i.length)}if(this.ondata(s,!1),u(this.s.w,0,s.length),this.s.w.set(s,this.s.w.length-s.length),this.s.l){var o=r.subarray(this.s.b);return this.s=4*this.s.c,void this.push(o,e)}}}else e&&f(5)},r}();_e.Decompress=I;return _e})
+</script>
+<script>
+'use strict';
+const TID = '01006F8002326000';
+
+async function readZip(u) {
+  const v = new DataView(u.buffer, u.byteOffset, u.byteLength);
+  let e = u.length - 22;
+  while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('not a zip file');
+  const count = v.getUint16(e + 10, true); let c = v.getUint32(e + 16, true);
+  const files = new Map(), dec = new TextDecoder();
+  for (let k = 0; k < count; k++) {
+    if (v.getUint32(c, true) !== 0x02014b50) throw new Error('broken zip directory');
+    const method = v.getUint16(c + 10, true), csize = v.getUint32(c + 20, true), usize = v.getUint32(c + 24, true);
+    const nlen = v.getUint16(c + 28, true), elen = v.getUint16(c + 30, true), clen = v.getUint16(c + 32, true);
+    const lo = v.getUint32(c + 42, true), name = dec.decode(u.subarray(c + 46, c + 46 + nlen));
+    c += 46 + nlen + elen + clen;
+    if (name.endsWith('/')) continue;
+    const at = lo + 30 + v.getUint16(lo + 26, true) + v.getUint16(lo + 28, true), raw = u.subarray(at, at + csize);
+    files.set(name, async () => {
+      if (method === 0) return raw;
+      if (method !== 8) throw new Error(name + ': unsupported compression');
+      const out = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+      if (out.length !== usize) throw new Error(name + ': bad size');
+      return out;
+    });
+  }
+  return files;
+}
+
+// LZMA into one output buffer (a whole 7z folder, so the buffer is the dictionary), after the LZMA SDK's LzmaSpec.cpp.
+// Prob layout: isMatch 0, isRep 192, isRepG0 204, isRepG1 216, isRepG2 228, isRep0Long 240, posSlot 432,
+// specPos 688, align 803, len 819, repLen 1333, literals 1847
+function lzma(out) {
+  let lc = 0, lp = 0, pb = 0, pr = null, state = 0, r0 = 0, r1 = 0, r2 = 0, r3 = 0, pos = 0, start = 0;
+  return {
+    get pos() { return pos; },
+    props(d) { lc = d % 9; d = (d / 9) | 0; lp = d % 5; pb = (d / 5) | 0; if (pb > 4) throw new Error('bad LZMA properties');
+               if (!pr || pr.length !== 1847 + (0x300 << (lc + lp))) pr = new Uint16Array(1847 + (0x300 << (lc + lp))); },
+    reset() { pr.fill(1024); state = 0; r0 = r1 = r2 = r3 = 0; },
+    resetDict() { start = pos; },
+    copy(src) { out.set(src, pos); pos += src.length; },
+    run(inp, ip, end) {   // decode until pos == end; the range coder starts at ip
+      let range = 0xFFFFFFFF, code = 0; ip++;
+      for (let i = 0; i < 4; i++) code = code * 256 + inp[ip++];
+      const bit = i => {
+        const p = pr[i], bound = (range >>> 11) * p; let b = 0;
+        if (code < bound) { range = bound; pr[i] = p + ((2048 - p) >>> 5); } else { range -= bound; code -= bound; pr[i] = p - (p >>> 5); b = 1; }
+        if (range < 16777216) { range *= 256; code = code * 256 + inp[ip++]; }
+        return b;
+      };
+      const tree = (base, n) => { let m = 1; for (let i = 0; i < n; i++) m = (m << 1) | bit(base + m); return m - (1 << n); };
+      const rtree = (base, n) => { let m = 1, s = 0; for (let i = 0; i < n; i++) { const b = bit(base + m); m = (m << 1) | b; s |= b << i; } return s; };
+      const len = (L, ps) => !bit(L) ? tree(L + 2 + ps * 8, 3) : !bit(L + 1) ? 8 + tree(L + 130 + ps * 8, 3) : 16 + tree(L + 258, 8);
+      const pbMask = (1 << pb) - 1, lpMask = (1 << lp) - 1;
+      while (pos < end) {
+        const ps = (pos - start) & pbMask;
+        if (!bit((state << 4) + ps)) {   // literal
+          const prev = pos > start ? out[pos - 1] : 0, base = 1847 + 0x300 * ((((pos - start) & lpMask) << lc) + (prev >> (8 - lc)));
+          let s = 1;
+          if (state >= 7) {
+            let mb = out[pos - r0 - 1];
+            do { const m = (mb >> 7) & 1; mb <<= 1; const b = bit(base + ((1 + m) << 8) + s); s = (s << 1) | b; if (m !== b) break; } while (s < 0x100);
+          }
+          while (s < 0x100) s = (s << 1) | bit(base + s);
+          out[pos++] = s - 0x100; state = state < 4 ? 0 : state < 10 ? state - 3 : state - 6;
+          continue;
+        }
+        let n;
+        if (bit(192 + state)) {   // rep match
+          if (!bit(204 + state)) {
+            if (!bit(240 + (state << 4) + ps)) { state = state < 7 ? 9 : 11; out[pos] = out[pos - r0 - 1]; pos++; continue; }
+          } else {
+            let d;
+            if (!bit(216 + state)) d = r1; else { if (!bit(228 + state)) d = r2; else { d = r3; r3 = r2; } r2 = r1; }
+            r1 = r0; r0 = d;
+          }
+          n = len(1333, ps); state = state < 7 ? 8 : 11;
+        } else {   // new match
+          r3 = r2; r2 = r1; r1 = r0; n = len(819, ps); state = state < 7 ? 7 : 10;
+          const slot = tree(432 + Math.min(n, 3) * 64, 6);
+          if (slot < 4) r0 = slot;
+          else {
+            const nd = (slot >> 1) - 1; let d = (2 | (slot & 1)) * 2 ** nd;
+            if (slot < 14) d += rtree(688 + d - slot, nd);
+            else {
+              let x = 0;
+              for (let i = nd - 4; i > 0; i--) { range = Math.floor(range / 2); let b = 0; if (code >= range) { code -= range; b = 1; } x = x * 2 + b;
+                                                 if (range < 16777216) { range *= 256; code = code * 256 + inp[ip++]; } }
+              d += x * 16 + rtree(803, 4);
+            }
+            if (d === 0xFFFFFFFF) break;   // end marker
+            r0 = d;
+          }
+        }
+        n += 2;
+        if (r0 >= pos - start || pos + n > end) throw new Error('The 7z data is damaged.');
+        for (; n > 0; n--, pos++) out[pos] = out[pos - r0 - 1];
+      }
+      return ip;
+    },
+  };
+}
+
+function lzma2(inp, ip, out) {
+  const L = lzma(out);
+  for (let c; (c = inp[ip++]) !== 0;) {
+    if (c < 0x80) {   // stored chunk; 1 also resets the dictionary
+      if (c > 2) throw new Error('The 7z data is damaged.');
+      const n = (inp[ip] << 8 | inp[ip + 1]) + 1; ip += 2;
+      if (c === 1) L.resetDict();
+      L.copy(inp.subarray(ip, ip + n)); ip += n; continue;
+    }
+    const u = ((c & 31) << 16) + (inp[ip] << 8) + inp[ip + 1] + 1, p = (inp[ip + 2] << 8) + inp[ip + 3] + 1, mode = (c >> 5) & 3; ip += 4;
+    if (mode === 3) L.resetDict();
+    if (mode >= 2) L.props(inp[ip++]);
+    if (mode >= 1) L.reset();
+    L.run(inp, ip, L.pos + u); ip += p;
+  }
+  if (L.pos !== out.length) throw new Error('The 7z data is damaged.');
+}
+
+// 7z: header (maybe LZMA-packed itself), then folders of LZMA/LZMA2 (or stored) data; files are runs inside their folder
+async function read7z(u) {
+  const bad = () => new Error('This 7z uses a feature the page cannot read. Extract it and zip the atmosphere folder instead.');
+  const rd = b => {
+    let p = 0; const r = {
+      get pos() { return p; }, seek(x) { p = x; },
+      byte: () => b[p++], bytes: n => b.subarray(p, p += n), u32() { p += 4; return (b[p - 4] | b[p - 3] << 8 | b[p - 2] << 16 | b[p - 1] << 24) >>> 0; },
+      num() { const f = b[p++]; let v = 0; for (let i = 0, m = 0x80; i < 8; i++, m >>= 1) { if (!(f & m)) return v + (f & (m - 1)) * 2 ** (8 * i); v += b[p++] * 2 ** (8 * i); } return v; },
+      bits(n) { const a = []; for (let i = 0, x = 0; i < n; i++) { if (!(i & 7)) x = b[p++]; a.push(!!(x & (0x80 >> (i & 7)))); } return a; },
+      defs(n) { return b[p++] ? new Array(n).fill(true) : r.bits(n); },
+    }; return r;
+  };
+  const folder = r => {
+    const n = r.num(), coders = []; let ins = 0, outs = 0;
+    for (let i = 0; i < n; i++) {
+      const fl = r.byte(); if (fl & 0xC0) throw bad();
+      const id = [...r.bytes(fl & 15)].map(x => x.toString(16).padStart(2, '0')).join('');
+      let ni = 1, no = 1; if (fl & 16) { ni = r.num(); no = r.num(); }
+      coders.push({ id, props: fl & 32 ? r.bytes(r.num()) : null }); ins += ni; outs += no;
+    }
+    for (let i = 0; i < outs - 1; i++) { r.num(); r.num(); }
+    if (ins - (outs - 1) > 1) for (let i = 0; i < ins - (outs - 1); i++) r.num();
+    return { coders, outs };
+  };
+  const streams = r => {
+    const s = { packPos: 0, packSizes: [], folders: [] };
+    for (let id; (id = r.num()) !== 0;) {
+      if (id === 6) {
+        s.packPos = r.num(); const n = r.num();
+        for (let t; (t = r.num()) !== 0;) {
+          if (t === 9) for (let i = 0; i < n; i++) s.packSizes.push(r.num());
+          else if (t === 10) r.defs(n).forEach(x => x && r.u32()); else throw bad();
+        }
+      } else if (id === 7) {
+        if (r.num() !== 11) throw bad(); const n = r.num(); if (r.byte()) throw bad();
+        for (let i = 0; i < n; i++) s.folders.push(folder(r));
+        if (r.num() !== 12) throw bad();
+        for (const f of s.folders) f.sizes = Array.from({ length: f.outs }, () => r.num());
+        for (let t; (t = r.num()) !== 0;) { if (t !== 10) throw bad(); const d = r.defs(n); s.folders.forEach((f, i) => { if (d[i]) f.crc = r.u32(); }); }
+      } else if (id === 8) {
+        const F = s.folders; let t = r.num();
+        s.counts = F.map(() => 1);
+        if (t === 13) { s.counts = F.map(() => r.num()); t = r.num(); }
+        s.sizes = []; s.crcs = [];
+        F.forEach((f, i) => {
+          let sum = 0;
+          if (t === 9) for (let k = 1; k < s.counts[i]; k++) { const x = r.num(); s.sizes.push(x); sum += x; }
+          if (s.counts[i]) s.sizes.push(f.sizes[f.sizes.length - 1] - sum);
+        });
+        if (t === 9) t = r.num();
+        const known = (f, i) => s.counts[i] === 1 && f.crc !== undefined;
+        let vals = [];
+        for (; t !== 0; t = r.num()) {
+          if (t !== 10) throw bad();
+          const need = F.reduce((a, f, i) => a + (known(f, i) ? 0 : s.counts[i]), 0);
+          vals = r.defs(need).map(x => x ? r.u32() : undefined);
+        }
+        let k = 0;
+        F.forEach((f, i) => { if (known(f, i)) s.crcs.push(f.crc); else for (let j = 0; j < s.counts[i]; j++) s.crcs.push(vals[k++]); });
+      } else throw bad();
+    }
+    if (!s.counts) { s.counts = s.folders.map(() => 1); s.sizes = s.folders.map(f => f.sizes[f.sizes.length - 1]); s.crcs = s.folders.map(f => f.crc); }
+    return s;
+  };
+  const unpack = (s, i) => {
+    const f = s.folders[i]; if (f.coders.length !== 1) throw bad();
+    let at = 32 + s.packPos; for (let k = 0; k < i; k++) at += s.packSizes[k];
+    const c = f.coders[0], out = new Uint8Array(f.sizes[0]);
+    if (c.id === '21') lzma2(u, at, out);
+    else if (c.id === '030101') { const L = lzma(out); L.props(c.props[0]); L.reset(); L.run(u, at, out.length); }
+    else if (c.id === '00') out.set(u.subarray(at, at + out.length));
+    else throw bad();
+    if (f.crc !== undefined && crc32(out) !== f.crc) throw new Error('The 7z data is damaged.');
+    return out;
+  };
+  const v = new DataView(u.buffer, u.byteOffset, u.byteLength), q = o => v.getUint32(o, true) + v.getUint32(o + 4, true) * 2 ** 32;
+  let r = rd(u.subarray(32 + q(12), 32 + q(12) + q(20))), id = r.num();
+  if (id === 0x17) { const s = streams(r); r = rd(unpack(s, 0)); id = r.num(); }
+  if (id !== 1) throw bad();
+  let s = null, names = [], empty = [], emptyFile = [];
+  for (let t; (t = r.num()) !== 0;) {
+    if (t === 4) s = streams(r);
+    else if (t === 5) {
+      const n = r.num(); empty = new Array(n).fill(false);
+      for (let p; (p = r.num()) !== 0;) {
+        const e = r.num() + r.pos;
+        if (p === 14) empty = r.bits(n);
+        else if (p === 15) emptyFile = r.bits(empty.filter(Boolean).length);
+        else if (p === 17) { if (r.byte()) throw bad(); names = new TextDecoder('utf-16le').decode(r.bytes(e - r.pos)).split('\0'); }
+        r.seek(e);
+      }
+    } else throw bad();
+  }
+  const runs = [], cache = [];
+  if (s) s.folders.forEach((f, i) => { for (let k = 0, off = 0; k < s.counts[i]; k++) { const j = runs.length; runs.push({ i, off, size: s.sizes[j], crc: s.crcs[j] }); off += s.sizes[j]; } });
+  const files = new Map(); let j = 0, e = 0;
+  names.slice(0, empty.length).forEach((nm, k) => {
+    const name = nm.replace(/\\/g, '/');
+    if (empty[k]) { if (emptyFile[e++]) files.set(name, async () => new Uint8Array(0)); return; }
+    const x = runs[j++];
+    files.set(name, async () => {
+      const d = (cache[x.i] ||= unpack(s, x.i)).subarray(x.off, x.off + x.size);
+      if (x.crc !== undefined && crc32(d) !== x.crc) throw new Error(name + ': the 7z data check failed.');
+      return d;
+    });
+  });
+  return files;
+}
+
+const CRC = new Uint32Array(256).map((_, n) => { for (let k = 0; k < 8; k++) n = n & 1 ? 0xEDB88320 ^ (n >>> 1) : n >>> 1; return n >>> 0; });
+function crc32(u) { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+
+function writeZip(entries) {   // [name, bytes], stored (no compression)
+  const enc = new TextEncoder(), parts = [], dir = []; let off = 0;
+  for (const [name, data] of entries) {
+    const n = enc.encode(name), crc = crc32(data), h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x800, true); h.setUint16(12, 0x21, true);
+    h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, n.length, true);
+    const d = new DataView(new ArrayBuffer(46));
+    d.setUint32(0, 0x02014b50, true); d.setUint16(4, 20, true); d.setUint16(6, 20, true); d.setUint16(8, 0x800, true); d.setUint16(14, 0x21, true);
+    d.setUint32(16, crc, true); d.setUint32(20, data.length, true); d.setUint32(24, data.length, true); d.setUint16(28, n.length, true);
+    d.setUint32(42, off, true);
+    parts.push(new Uint8Array(h.buffer), n, data); dir.push(new Uint8Array(d.buffer), n);
+    off += 30 + n.length + data.length;
+  }
+  const size = dir.reduce((a, b) => a + b.length, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, entries.length, true); e.setUint16(10, entries.length, true);
+  e.setUint32(12, size, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...dir, new Uint8Array(e.buffer)], { type: 'application/zip' });
+}
+
+const hex = b => Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, '0')).join('');
+const sha256 = async u => hex(await crypto.subtle.digest('SHA-256', u));
+const unb64 = s => Uint8Array.from(atob(s), ch => ch.charCodeAt(0));
+const cat = parts => { const o = new Uint8Array(parts.reduce((a, p) => a + p.length, 0)); let at = 0; for (const p of parts) { o.set(p, at); at += p.length; } return o; };
+const u32 = n => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b; };
+const utf8 = s => new TextEncoder().encode(s);
+
+// zstd: fzstd decodes; we write uncompressed (raw-block) frames, which any zstd decoder accepts
+function zstdRaw(d) {
+  const f = new Uint8Array(13); f.set([0x28, 0xB5, 0x2F, 0xFD, 0xE0]); new DataView(f.buffer).setBigUint64(5, BigInt(d.length), true);
+  const parts = [f];
+  for (let o = 0; o < d.length; o += 131072) {
+    const n = Math.min(131072, d.length - o), last = o + n >= d.length ? 1 : 0, h = (n << 3) | last;
+    parts.push(new Uint8Array([h & 255, (h >> 8) & 255, (h >> 16) & 255]), d.subarray(o, o + n));
+  }
+  return cat(parts);
+}
+function yaz0Raw(d) {   // store-only Yaz0 (all literals)
+  const out = new Uint8Array(16 + d.length + Math.ceil(d.length / 8)); out.set([0x59, 0x61, 0x7a, 0x30]);
+  new DataView(out.buffer).setUint32(4, d.length, false); let o = 16;
+  for (let i = 0; i < d.length; i += 8) { const n = Math.min(8, d.length - i); out[o++] = (0xff << (8 - n)) & 0xff; out.set(d.subarray(i, i + n), o); o += n; }
+  return out.subarray(0, o);
+}
+
+// SARC
+function sarcParse(b) {
+  const v = new DataView(b.buffer, b.byteOffset, b.byteLength); if (hex(b.subarray(0, 4)) !== '53415243') throw new Error('not a SARC');
+  const doff = v.getUint32(0xC, true), n = v.getUint16(0x1A, true), so = 0x20 + 16 * n, nt = so + 8, dec = new TextDecoder(), ents = [];
+  for (let i = 0; i < n; i++) {
+    const h = v.getUint32(0x20 + 16 * i, true), attr = v.getUint32(0x24 + 16 * i, true), s = v.getUint32(0x28 + 16 * i, true), e = v.getUint32(0x2C + 16 * i, true);
+    let name = null; if (attr >>> 24) { const o = nt + (attr & 0xffffff) * 4; let z = o; while (b[z]) z++; name = dec.decode(b.subarray(o, z)); }
+    ents.push({ h, name, s, e, data: b.subarray(doff + s, doff + e) });
+  }
+  return { ents, doff, n };
+}
+function sarcReplace(b, repl) {
+  const { ents, doff } = sarcParse(b), head = b.slice(0, doff), hv = new DataView(head.buffer);
+  let al = 1; while (al < 0x2000 && ents.every(e => e.s % (al * 2) === 0)) al *= 2; al = Math.max(al, 4);
+  const parts = []; let len = 0;
+  ents.forEach((e, i) => {
+    const d = repl.get(e.name) || e.data; while (len % al) { parts.push(new Uint8Array(1)); len++; }
+    hv.setUint32(0x28 + 16 * i, len, true); hv.setUint32(0x2C + 16 * i, len + d.length, true); parts.push(d); len += d.length;
+  });
+  const out = cat([head, ...parts]); new DataView(out.buffer).setUint32(8, out.length, true); return out;
+}
+
+// MSBT: add or replace labels
+function msbtEdit(b, add, set) {
+  const v = new DataView(b.buffer, b.byteOffset, b.byteLength), n = v.getUint16(0xE, true), secs = []; let o = 0x20;
+  for (let i = 0; i < n; i++) { const sz = v.getUint32(o + 4, true); secs.push([b.subarray(o, o + 4), b.subarray(o + 16, o + 16 + sz)]); o = (o + 16 + sz + 15) & ~15; }
+  const find = m => secs.find(s => String.fromCharCode(...s[0]) === m);
+  const L = find('LBL1')[1], T = find('TXT2')[1], lv = new DataView(L.buffer, L.byteOffset, L.byteLength), tv = new DataView(T.buffer, T.byteOffset, T.byteLength);
+  const g = lv.getUint32(0, true), labels = [];
+  for (let i = 0; i < g; i++) {
+    const c = lv.getUint32(4 + 8 * i, true); let p = lv.getUint32(8 + 8 * i, true);
+    for (let k = 0; k < c; k++) { const ln = L[p]; labels.push([new TextDecoder().decode(L.subarray(p + 1, p + 1 + ln)), lv.getUint32(p + 1 + ln, true)]); p += 5 + ln; }
+  }
+  const cnt = tv.getUint32(0, true), offs = [...Array(cnt)].map((_, i) => tv.getUint32(4 + 4 * i, true)).concat([T.length]);
+  const texts = [...Array(cnt)].map((_, i) => T.subarray(offs[i], offs[i + 1]));
+  const idx = new Map(labels);
+  for (const [name, t] of set) { if (!idx.has(name)) throw new Error('label missing: ' + name); texts[idx.get(name)] = unb64(t); }
+  for (const [name, t] of add) { if (idx.has(name)) throw new Error('label already there: ' + name); idx.set(name, texts.length); texts.push(unb64(t)); }
+  const hashg = nm => { let h = 0; for (const ch of utf8(nm)) h = (Math.imul(h, 0x492) + ch) >>> 0; return h % g; };
+  const groups = [...Array(g)].map(() => []);
+  for (const [nm, i] of [...idx].sort((a, c) => a[1] - c[1])) groups[hashg(nm)].push([nm, i]);
+  const body = [], head = [u32(g)]; let off = 4 + 8 * g;
+  for (const gr of groups) {
+    head.push(u32(gr.length), u32(off));
+    for (const [nm, i] of gr) { const nb = utf8(nm), e = cat([new Uint8Array([nb.length]), nb, u32(i)]); body.push(e); off += e.length; }
+  }
+  const newL = cat([...head, ...body]); let to = 4 + 4 * texts.length; const toffs = [];
+  for (const t of texts) { toffs.push(to); to += t.length; }
+  const newT = cat([u32(texts.length), ...toffs.map(u32), ...texts]);
+  const out = [b.slice(0, 0x20)]; let len = 0x20;
+  for (const [mg, d0] of secs) {
+    const m = String.fromCharCode(...mg), d = m === 'LBL1' ? newL : m === 'TXT2' ? newT : m === 'ATR1' ? cat([u32(texts.length), d0.subarray(4)]) : d0;
+    const hdr = new Uint8Array(16); hdr.set(mg); new DataView(hdr.buffer).setUint32(4, d.length, true); out.push(hdr, d); len += 16 + d.length;
+    const pad = (16 - (len % 16)) % 16; if (pad) { out.push(new Uint8Array(pad).fill(0xab)); len += pad; }
+  }
+  const r = cat(out); new DataView(r.buffer).setUint32(0x12, r.length, true); return r;
+}
+
+async function inflateRaw(u) { return new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()); }
+
+// BYML v3 (strings, arrays, dicts only: that is all EventFlowInfoProduct.byml holds)
+function bymlRead(b) {
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength), td = new TextDecoder();
+  if (b[0] !== 0x59 || b[1] !== 0x42) throw new Error('not a BYML');
+  const ko = dv.getUint32(4, true), so = dv.getUint32(8, true), ro = dv.getUint32(12, true);
+  const tab = o => { const n = dv.getUint32(o, true) >>> 8, r = []; for (let i = 0; i < n; i++) { const s = o + dv.getUint32(o + 4 + 4 * i, true); let e = s; while (b[e]) e++; r.push(td.decode(b.subarray(s, e))); } return r; };
+  const K = tab(ko), S = tab(so);
+  const val = (t, v) => { if (t === 0xA0) return S[v]; if (t === 0xC0 || t === 0xC1) return node(v); throw new Error('BYML value type 0x' + t.toString(16) + ' is not handled'); };
+  const node = o => {
+    const t = b[o], n = dv.getUint32(o, true) >>> 8;
+    if (t === 0xC0) { const vo = (o + 4 + n + 3) & ~3; return Array.from({ length: n }, (_, i) => val(b[o + 4 + i], dv.getUint32(vo + 4 * i, true))); }
+    if (t === 0xC1) { const d = {}; for (let i = 0; i < n; i++) { const e = o + 4 + 8 * i; d[K[dv.getUint32(e, true) & 0xFFFFFF]] = val(b[e + 3], dv.getUint32(e + 4, true)); } return d; }
+    throw new Error('BYML node type 0x' + t.toString(16) + ' is not handled');
+  };
+  return node(ro);
+}
+function bymlWrite(root) {
+  const keys = new Set(), strs = new Set();
+  const scan = x => { if (Array.isArray(x)) x.forEach(scan); else if (x && typeof x === 'object') for (const k in x) { keys.add(k); scan(x[k]); } else strs.add(x); };
+  scan(root);
+  const K = [...keys].sort(), S = [...strs].sort(), ki = new Map(K.map((k, i) => [k, i])), si = new Map(S.map((s, i) => [s, i]));
+  const table = L => {
+    const offs = [], body = []; let off = 4 + 4 * (L.length + 1);
+    for (const s of L) { const e = cat([utf8(s), new Uint8Array(1)]); offs.push(off); body.push(e); off += e.length; }
+    offs.push(off); const o = cat([u32(0xC2 | (L.length << 8)), ...offs.map(u32), ...body]);
+    return cat([o, new Uint8Array((4 - o.length % 4) % 4)]);
+  };
+  const kt = table(K), st = table(S);
+  let out = new Uint8Array(1 << 20 | 0), len = 16, dv;
+  const grow = n => { if (len + n > out.length) { const o2 = new Uint8Array(Math.max(out.length * 2, len + n)); o2.set(out); out = o2; } dv = new DataView(out.buffer); };
+  grow(0); const ko = len; grow(kt.length); out.set(kt, len); len += kt.length; const so = len; grow(st.length); out.set(st, len); len += st.length;
+  const node = x => {
+    const isD = !Array.isArray(x), items = isD ? Object.entries(x).sort((a, b) => ki.get(a[0]) - ki.get(b[0])) : x.map((v, i) => [i, v]), n = items.length;
+    const size = isD ? 4 + 8 * n : 4 + n + ((4 - (4 + n) % 4) % 4) + 4 * n, pos = len; grow(size); len += size;
+    const vals = items.map(([k, v]) => typeof v === 'string' ? [k, 0xA0, si.get(v)] : [k, Array.isArray(v) ? 0xC0 : 0xC1, node(v)]);
+    dv = new DataView(out.buffer);
+    if (isD) { dv.setUint32(pos, 0xC1 | (n << 8), true); vals.forEach(([k, t, v], i) => { const e = pos + 4 + 8 * i; dv.setUint32(e, ki.get(k), true); out[e + 3] = t; dv.setUint32(e + 4, v, true); }); }
+    else { dv.setUint32(pos, 0xC0 | (n << 8), true); const vo = pos + 4 + n + ((4 - (4 + n) % 4) % 4); vals.forEach(([k, t, v], i) => { out[pos + 4 + i] = t; dv.setUint32(vo + 4 * i, v, true); }); }
+    return pos;
+  };
+  const ro = node(root); dv = new DataView(out.buffer);
+  out[0] = 0x59; out[1] = 0x42; dv.setUint16(2, 3, true); dv.setUint32(4, ko, true); dv.setUint32(8, so, true); dv.setUint32(12, ro, true);
+  return out.slice(0, len);
+}
+
+async function build(modBytes, patch, zstd) {
+  if (patch.format !== 1 || patch.tid !== TID) throw new Error('That is not the jub-port-patch.json file.');
+  const m = modBytes, is7z = m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C;
+  if (!is7z && !(m[0] === 0x50 && m[1] === 0x4B)) throw new Error("That is not the port's download. Pick the Atmosphere .7z from the port's Releases.");
+  const files = is7z ? await read7z(m) : await readZip(m);
+  const key = [...files.keys()].find(n => n.endsWith('romfs/Bcsv/ItemParam.bcsv'));
+  if (!key) throw new Error('No romfs/Bcsv/ItemParam.bcsv in that file. Pick the Atmosphere download of the port (not the Emulator one).');
+  const base = key.slice(0, -'Bcsv/ItemParam.bcsv'.length);
+  const get = async r => { const f = files.get(base + r); if (!f) throw new Error(r + ' is missing from that download.'); return f(); };
+  const done = new Map();
+  for (const [r, p] of Object.entries(patch.bcsv)) {
+    const d = (await get(r)).slice();
+    if (await sha256(d) !== p.in_sha256) throw new Error(r + ' is not the one from ' + patch.release + '. The patch only fits that release.');
+    for (const [off, b] of p.edits) d.set(unb64(b), off);
+    if (await sha256(d) !== p.out_sha256) throw new Error(r + ' came out wrong. Please open an issue.');
+    done.set(r, d);
+  }
+  const S = patch.strings, plain = zstd(await get(S.file));
+  if (await sha256(plain) !== S.in_content_sha256) throw new Error(S.file + ' is not the one from ' + patch.release + '.');
+  const sar = sarcParse(plain), repl = new Map();
+  for (const [name, e] of Object.entries(S.msbt)) {
+    const ent = sar.ents.find(x => x.name === name); if (!ent) throw new Error('missing ' + name);
+    repl.set(name, msbtEdit(ent.data, e.add, e.set));
+  }
+  const nsar = sarcReplace(plain, repl);
+  if (await sha256(nsar) !== S.out_content_sha256) throw new Error(S.file + ' came out wrong. Please open an issue.');
+  done.set(S.file, zstdRaw(nsar));
+  const R = patch.rstb, tab = cat([utf8('RSTC'), u32(R.count), await inflateRaw(unb64(R.data))]);
+  if (await sha256(tab) !== R.content_sha256) throw new Error('The size table came out wrong. Please open an issue.');
+  done.set('System/Resource/ResourceSizeTable.srsizetable', yaz0Raw(tab));
+  // Device-tested on ACNH 3.0.3: the port's 2.x-era EventFlow files hang the load, UnitIcon models crash it, other Message files are not 3.0.3's
+  const BAD = /^(EventFlow\/|Model\/UnitIcon|Message\/(?!String_USen))/;
+  const EF = patch.eventflow, okFlow = new Set((EF ? EF.flows : []).map(f => 'EventFlow/' + f + '.bfevfl'));
+  if (EF) {   // 3.0.3's Info byml plus the port's additions: put back the 3.0.3 values of the entries the port changed
+    const d = await get(EF.file);
+    if (await sha256(d) !== EF.in_sha256) throw new Error(EF.file + ' is not the one from ' + patch.release + '. The patch only fits that release.');
+    const m = bymlRead(d); for (const [k, x] of Object.entries(EF.revert)) Object.assign(m[k], x);
+    const o = bymlWrite(m); if (await sha256(o) !== EF.out_sha256) throw new Error(EF.file + ' came out wrong. Please open an issue.');
+    done.set(EF.file, o);
+  }
+  const drop = new Set(patch.drop), out = `atmosphere/contents/${TID}/romfs/`, entries = [];
+  for (const name of [...files.keys()].filter(k => k.startsWith(base)).sort()) {
+    const r = name.slice(base.length); if (drop.has(r) || done.has(r) || (BAD.test(r) && !okFlow.has(r))) continue;
+    entries.push([out + r, await files.get(name)()]);
+  }
+  for (const [r, d] of done) entries.push([out + r, d]);
+  return { zip: writeZip(entries), romfs: entries.length };
+}
+
+if (typeof document !== 'undefined') {
+  const $ = id => document.getElementById(id), status = (t, cls) => { $('status').textContent = t; $('status').className = cls || ''; };
+  const ready = () => { $('go').disabled = !($('mod').files.length && $('patch').files.length); };
+  const picked = id => { const f = $(id).files[0]; $(id + '-name').textContent = f ? f.name : 'No file yet'; $('step-' + id).classList.toggle('done', !!f); ready(); };
+  $('mod').onchange = () => picked('mod'); $('patch').onchange = () => picked('patch');
+  $('go').onclick = async () => {
+    $('go').disabled = true; status('Working…');
+    try {
+      let patch;
+      try { patch = JSON.parse(await $('patch').files[0].text()); } catch { throw new Error('That is not the jub-port-patch.json file.'); }
+      const r = await build(new Uint8Array(await $('mod').files[0].arrayBuffer()), patch, d => fzstd.decompress(d));
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(r.zip); a.download = 'jubbsticks-additions-peanuts.zip'; document.body.append(a); a.click(); a.remove();
+      status(`Done: jubbsticks-additions-peanuts.zip (${(r.zip.size / 1048576).toFixed(1)} MB, ${r.romfs} files). Install it in Peanuts, last in the mod order.`, 'ok');
+    } catch (e) { status(e.message, 'err'); }
+    ready();
+  };
+}
+if (typeof module !== 'undefined') module.exports = { build };
+</script>
+</body>
+</html>
