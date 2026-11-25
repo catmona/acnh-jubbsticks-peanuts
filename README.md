@@ -16,7 +16,7 @@ The mod is Jubbsticks' work, and the port to 3.0.x is dragonloverlord's. I only 
 <img src="docs/img/features/new-stuff.png" alt="Jubbsticks' Additions: new items, new NPCs and new interactions, lots to discover and unlock, English only for now" width="100%">
 <img src="docs/img/features/stacks.png" alt="Stacks to 254: fish, bugs, dive fish, clams and trash all stack, every stack limit goes up to 254, done with romfs edits only (dragonloverlord's addition)" width="100%">
 <img src="docs/img/features/port.png" alt="From the port: all tools are unbreakable, the new tool and balloon DIYs stay out of hotel delivery requests" width="100%">
-<img src="docs/img/features/not-yet.png" alt="Not working on Peanuts yet: the port's extra message files, so some new NPC lines may be missing; its UnitIcon models; they crash ACNH 3.0.3 on Peanuts, so the patcher leaves them out for now" width="100%">
+<img src="docs/img/features/not-yet.png" alt="Not working on Peanuts yet: item icons for the new fruit and gems; their UnitIcon models crash ACNH 3.0.3 on Peanuts 0.1.8, so the patcher leaves them out until that's fixed" width="100%">
 
 ## Install
 
@@ -37,10 +37,11 @@ Offline play only, with your own copy of the game.
 This is early. Here's where it stands:
 
 - The patch only fits port version `UJAP-V0.0.2`. dragonloverlord is still fixing item IDs in the port, so new versions will keep coming. The page refuses a newer download until I make a patch for it.
-- An earlier build for V0.0.1 boots on my AYN Thor (Peanuts Native 0.1.7). I haven't played far enough yet to check the new items in game.
-- This V0.0.2 build hasn't been on the Thor yet. It comes out byte for byte the same from the page as from my PC build.
-- The EventFlow files (NPC dialogue flows) are in now: the patch adds the port's 40 new flows and merges its flow list into the 3.0.3 one. It boots on Peanuts 0.1.8 and loads my island, but I haven't checked that a new NPC flow plays. Notes are in [PORT.md](docs/PORT.md).
-- With ACNH Combined 3.0.3 also installed, the island load crashes because of Combined's oak tree model (`PltTreeOak`). Without that one model, QoL, this mod and Combined all load together on my Thor. That's a fix for Combined, not this mod.
+- This V0.0.2 build loads my island on my AYN Thor (Peanuts Native 0.1.8), together with QoL and ACNH Combined 3.0.3 (QoL first, then this mod, then Combined). It comes out byte for byte the same from the page as from my PC build.
+- The EventFlow files (NPC dialogue flows) are in: the patch adds the port's 40 new flows and merges its flow list into the 3.0.3 one. I haven't checked yet that a new NPC flow plays: my test island is still at the tent stage, and the player can't cross its rivers yet.
+- I haven't played far enough yet to check the new items in game.
+- The item icons of the new fruit and gems are left out for now (see the card above and [PORT.md](docs/PORT.md)).
+- With Peanuts' frame rate cap at 60 fps, the island load crashed on my Thor. With the cap at "Game owned", it loads. I'm looking into the 60 fps crash.
 
 ## About the AI part
 
@@ -52,10 +53,10 @@ None of this gets sent to the port: please don't open issues or pull requests on
 
 The patch file has no files from the port or the original mod in it. It holds:
 
-- the text of 79 vanilla 3.0.3 item names the port's `String_USen` lacks
+- the vanilla 3.0.3 message labels the port's `Message/` files lack: 79 item names in each `String` file and one line in each `TalkSNpc` file
 - a resource size table: vanilla 3.0.3 plus the port's files
 
-The page checks the port's `String_USen` by SHA-256 before and after, so it only works on the exact V0.0.2 download. The port's item tables go in as they are. Details are in [PORT.md](docs/PORT.md).
+The page checks each message file it changes by SHA-256 before and after, so it only works on the exact V0.0.2 download. The port's item tables go in as they are, and its 25 UnitIcon models stay out. Details are in [PORT.md](docs/PORT.md).
 
 ## Building it yourself
 
