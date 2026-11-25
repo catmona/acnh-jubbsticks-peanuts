@@ -26,7 +26,9 @@ The mod is Jubbsticks' work, and the port to 3.0.x is dragonloverlord's. I only 
 4. Back up your save. In Peanuts, long-press ACNH to open its settings, then go to **Install mod… > Zip file** and pick `jubbsticks-additions-peanuts.zip`.
 5. Peanuts rebuilds the game with the mod (about 5 minutes for me). Then start a new game.
 
-Other mods that replace the same files (item tables, item names, the size table) will clash with it.
+Using other mods too? Install this one **first**, before any other ACNH mod. Peanuts gives each file to the first mod in the list that has it, and the first mod's size table limits every file. Pick your other mods' zips in the patcher's optional step 3, so the size table it makes covers their files too.
+
+Other mods that replace the same item tables or the same two NPC flows (`SNPC_fox_11_Commune_Lorrery`, `SNPC_slo_02_Commune`) lose those files to this one.
 
 Offline play only, with your own copy of the game.
 
@@ -37,7 +39,8 @@ This is early. Here's where it stands:
 - The patch only fits port version `UJAP-V0.0.2`. dragonloverlord is still fixing item IDs in the port, so new versions will keep coming. The page refuses a newer download until I make a patch for it.
 - An earlier build for V0.0.1 boots on my AYN Thor (Peanuts Native 0.1.7). I haven't played far enough yet to check the new items in game.
 - This V0.0.2 build hasn't been on the Thor yet. It comes out byte for byte the same from the page as from my PC build.
-- The EventFlow files (NPC dialogue flows) are the big missing piece. I'm still working out why they crash Peanuts. Notes are in [PORT.md](docs/PORT.md).
+- The EventFlow files (NPC dialogue flows) aren't in the release yet. A test build with them boots on Peanuts 0.1.8 and loads my island, but I haven't checked that a new NPC flow plays. Notes are in [PORT.md](docs/PORT.md).
+- With ACNH Combined 3.0.3 also installed, the island load crashes because of Combined's oak tree model (`PltTreeOak`). Without that one model, QoL, this mod and Combined all load together on my Thor. That's a fix for Combined, not this mod.
 
 ## About the AI part
 

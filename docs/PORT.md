@@ -26,9 +26,19 @@ Bisecting on an AYN Thor (each build listed in the launch log's `DM_ROMFS_OVERLA
 | ... plus the 20 `UnitIcon*` models | crashes (SIGSEGV) |
 | ... plus the port's other `Message/` sarcs | crashes while loading `Message/System_*` (they are 2.x-era; all 9 USen sarcs differ from 3.0.3) |
 
-### EventFlow (open)
+### EventFlow (boots, not in the release yet)
 
-The port's `EventFlow/Info/EventFlowInfoProduct.byml` is a 2.x-era file that also changes existing 3.0.3 entries. A merged one (vanilla 3.0.3 plus only the port's new entries) still crashes at boot, with or without the new flow files, at `main+0x1ae078c`: a NULL resource returned while the Message sarcs load. The size table is ruled out, and the merged byml matches vanilla apart from the additions. Reading the 3.0.3 code shows the startup function loads the Message sarcs before it reads this byml (unless that function runs twice, which isn't ruled out), and the game keeps no fixed-size table built from it. So the crash most likely comes from how the file gets into the game, not from what's in it. The next device tests swap in vanilla's own byml, then vanilla padded to the merged size, to tell those apart. Until then the new NPC dialogue flows are missing.
+The port's `EventFlow/Info/EventFlowInfoProduct.byml` is a 2.x-era file that also changes existing 3.0.3 entries, so the build uses a merged one: vanilla 3.0.3 plus only the port's new entries (`tools/add_eventflow.py`). The earlier boot crash at `main+0x1ae078c` was the size table, not the byml. Combined was first in the mod list then, and its table capped `EventFlowInfoProduct.byml` at 274,944 bytes, below the merged file's 277,392. With Jubbsticks first and the size tables max-merged, the EventFlow build boots and loads the island on Peanuts 0.1.8. Nobody has checked yet that a new NPC flow plays.
+
+### Peanuts mod order and size tables
+
+Peanuts lays mods over the game in list order, and the **first** mod that has a file wins. There is no reorder: deleting and reinstalling a mod puts it last. The `ResourceSizeTable.srsizetable` is a file like any other, so only the first mod's table is used, and the game refuses any file bigger than its entry there. That is why Jubbsticks must be installed first, and why the patcher's optional "other mods" step (and `tools/build_rstb.py --with`) takes the largest size per file across this mod and the other mods' tables.
+
+### ACNH Combined 3.0.3
+
+The two mods share `ItemParam`, `ItemKind`, `ItemOutfitInfo` and `EventFlagsLifeSupportDailyParam`. A keyed row diff against vanilla finds no clash that matters: Combined changes 1 ItemParam row, 6 ItemOutfitInfo rows and one daily-param field, and the only real overlap is the stack size of 34 ItemKind rows (Jubbsticks' 254 wins over Combined's 99). They also share the two flows `SNPC_fox_11_Commune_Lorrery` and `SNPC_slo_02_Commune` and the Pansy and Rose models, where Jubbsticks wins.
+
+With QoL, Jubbsticks and full Combined, the title loads but the island load crashes (`pc=sdk+0x582b2c`, a NULL memset after an actor pool allocation fails). Removing parts of Combined on the device narrowed it to its oak models: without `PltTreeOak` and `PltTreeOakSnow`, all three load the island. Combined's own model check fails `PltTreeOak` (geometry and material block 1,458,176 bytes vs vanilla 1,462,272), so the fix belongs in Combined.
 
 ## The patch file
 
