@@ -1,8 +1,9 @@
-"""Build the standalone Peanuts romfs of the Jubbsticks port. Usage: build_jub.py <workspace> <out romfs dir>
+"""Build the standalone Peanuts romfs of the Jubbsticks port. Usage: build_jub.py <workspace> <out romfs dir> [--no-icons]
+--no-icons leaves out the 25 Model/UnitIcon* models (they crash ACNH 3.0.3 at the title unless the memory fix is installed; PORT.md).
 Workspace: port-dl/repo (the port's extracted release), vanilla/update_2228224 (3.0.3 romfs files from your own game).
 Item tables are the port's as is; the Message sarcs get back the vanilla 3.0.3 labels the port's copies lack. The size table is build_rstb.py's job."""
 import sys,os,shutil,struct,collections,zstandard
-S=sys.argv[1]; OUT=sys.argv[2]; sys.path.insert(0,os.path.dirname(os.path.abspath(__file__))); import sarc,msbt
+S=sys.argv[1]; OUT=sys.argv[2]; NOICONS='--no-icons' in sys.argv[3:]; sys.path.insert(0,os.path.dirname(os.path.abspath(__file__))); import sarc,msbt
 PR=os.path.join(S,'port-dl/repo/atmosphere/contents/01006F8002326000/romfs'); VAN=os.path.join(S,'vanilla/update_2228224')
 if os.path.exists(OUT): shutil.rmtree(OUT)
 n=0
@@ -10,7 +11,7 @@ for dp,_,fs in os.walk(PR):
     for f in fs:
         rel=os.path.relpath(os.path.join(dp,f),PR).replace(chr(92),'/')
         if rel.startswith('System/'): continue
-        if rel.startswith('Model/UnitIcon'): continue   # crash ACNH 3.0.3 on Peanuts 0.1.8 at the title (PORT.md)
+        if NOICONS and rel.startswith('Model/UnitIcon'): continue   # without the memory fix they crash ACNH 3.0.3 at the title (PORT.md)
         d=os.path.join(OUT,rel); os.makedirs(os.path.dirname(d),exist_ok=True); shutil.copyfile(os.path.join(dp,f),d); n+=1
 print('copied',n)
 def rd(p): return open(p,'rb').read()

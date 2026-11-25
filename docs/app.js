@@ -424,7 +424,7 @@ function bymlWrite(root) {
   return out.slice(0, len);
 }
 
-async function build(modBytes, patch, zstd, others = []) {   // others: [{ name, bytes }] other mods' zips
+async function build(modBytes, patch, zstd, others = [], fix = true) {   // others: [{ name, bytes }] other mods' zips; fix: the memory fix goes in too
   if (patch.format !== 1 || patch.tid !== TID) throw new Error('That is not the jub-port-patch.json file.');
   const m = modBytes, is7z = m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C;
   if (!is7z && !(m[0] === 0x50 && m[1] === 0x4B)) throw new Error("That is not the port's download. Pick the Atmosphere .7z from the port's Releases.");
@@ -468,10 +468,12 @@ async function build(modBytes, patch, zstd, others = []) {   // others: [{ name,
     mt = r.tab; merged.push(`raised ${r.raised}, added ${r.added} from ${o.name}`);
   }
   done.set(RS, yaz0Raw(mt));
-  // EventFlow: only the listed new flows go in (the port's 2.x-era copies of 3.0.3 flows hang the load). UnitIcon models
-  // crash ACNH 3.0.3 on Peanuts 0.1.8 at the title, so they stay out. A patch without 'messages' predates the label fix
-  // of the other Message sarcs, so it keeps those out too.
-  const BAD = patch.messages ? /^(EventFlow\/|Model\/UnitIcon)/ : /^(EventFlow\/|Model\/UnitIcon|Message\/(?!String_USen))/;
+  // EventFlow: only the listed new flows go in (the port's 2.x-era copies of 3.0.3 flows hang the load). The UnitIcon models
+  // ('with_fix') overflow a fixed game heap and crash ACNH 3.0.3 at the title unless the memory fix is installed, so they go in
+  // only with it. A patch without 'with_fix' predates the fix and keeps them out; one without 'messages' predates the label
+  // fix of the other Message sarcs, so it keeps those out too.
+  const BAD = patch.with_fix ? /^EventFlow\// : patch.messages ? /^(EventFlow\/|Model\/UnitIcon)/ : /^(EventFlow\/|Model\/UnitIcon|Message\/(?!String_USen))/;
+  const needFix = new Set(fix ? [] : patch.with_fix || []);
   const EF = patch.eventflow, okFlow = new Set((EF ? EF.flows : []).map(f => 'EventFlow/' + f + '.bfevfl'));
   if (EF) {   // 3.0.3's Info byml plus the port's additions: put back the 3.0.3 values of the entries the port changed
     const d = await get(EF.file);
@@ -482,32 +484,39 @@ async function build(modBytes, patch, zstd, others = []) {   // others: [{ name,
   }
   const drop = new Set(patch.drop), out = `atmosphere/contents/${TID}/romfs/`, entries = [];
   for (const name of [...files.keys()].filter(k => k.startsWith(base)).sort()) {
-    const r = name.slice(base.length); if (drop.has(r) || done.has(r) || (BAD.test(r) && !okFlow.has(r))) continue;
+    const r = name.slice(base.length); if (drop.has(r) || needFix.has(r) || done.has(r) || (BAD.test(r) && !okFlow.has(r))) continue;
     entries.push([out + r, await files.get(name)()]);
   }
   for (const [r, d] of done) entries.push([out + r, d]);
-  return { zip: writeZip(entries), romfs: entries.length, merged };
+  return { zip: writeZip(entries), romfs: entries.length, merged, icons: (patch.with_fix || []).length - needFix.size };
 }
 
-if (typeof document !== 'undefined') {
-  const $ = id => document.getElementById(id), status = (t, cls) => { $('status').textContent = t; $('status').className = cls || ''; };
-  const ready = () => { $('go').disabled = !($('mod').files.length && $('patch').files.length); };
-  const picked = id => { const f = $(id).files[0]; $(id + '-name').textContent = f ? f.name : 'No file yet'; $('step-' + id).classList.toggle('done', !!f); ready(); };
-  $('mod').onchange = () => picked('mod'); $('patch').onchange = () => picked('patch');
-  $('others').onchange = () => { const f = [...$('others').files]; $('others-name').textContent = f.length ? f.map(x => x.name).join(', ') : 'None'; $('step-others').classList.toggle('done', !!f.length); };
-  $('go').onclick = async () => {
-    $('go').disabled = true; status('Working…');
-    try {
-      let patch;
-      try { patch = JSON.parse(await $('patch').files[0].text()); } catch { throw new Error('That is not the jub-port-patch.json file.'); }
-      const others = [];
-      for (const f of $('others').files) others.push({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
-      const r = await build(new Uint8Array(await $('mod').files[0].arrayBuffer()), patch, d => fzstd.decompress(d), others);
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(r.zip); a.download = 'jubbsticks-additions-peanuts.zip'; document.body.append(a); a.click(); a.remove();
-      status(`Done: jubbsticks-additions-peanuts.zip (${(r.zip.size / 1048576).toFixed(1)} MB, ${r.romfs} files)${r.merged.length ? '. Size table: ' + r.merged.join('; ') : ''}. Install it in Peanuts.`, 'ok');
-    } catch (e) { status(e.message, 'err'); }
-    ready();
-  };
+// The memory fix: its own small mod, one IPS for ACNH 3.0.3's main (build ff1d1c05...). It makes the game's fixed
+// draw-array heap bigger and grows its parent heap by the same amount, out of memory the game leaves unused. Same bytes
+// as the standalone download in the QoL repo (tools/make_memfix.py there).
+const MEMFIX = { name: 'acnh-memory-fix-peanuts.zip', set: 'acnh-memory-fix', build_id: 'ff1d1c05670db6021c85b624a710b963',
+                 ips: 'SVBTMzIBVjygAAQAgKBSBATXeAAEAABwJkVFT0Y=' };
+const memFixZip = () => writeZip([[`atmosphere/exefs_patches/${MEMFIX.set}/${MEMFIX.build_id}.ips`, unb64(MEMFIX.ips)]]);
+
+// Cheap check used when a file is picked: is this the port's download that the patch fits? Throws a friendly message if not.
+// A .7z is taken on trust (unpacking it takes seconds; build() checks every file again). A zip is checked by its ItemParam.
+async function check(modBytes, patch) {
+  if (patch.format !== 1 || patch.tid !== TID) throw new Error('That is not the jub-port-patch.json file.');
+  const m = modBytes;
+  if (m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C) return `Jubbsticks' Additions port ${patch.release.replace(/^UJAP-/, '')}`;
+  const files = await readZip(m);
+  const key = [...files.keys()].find(n => n.endsWith('romfs/Bcsv/ItemParam.bcsv'));
+  if (!key) throw new Error('No romfs/Bcsv/ItemParam.bcsv in that file. Pick the Atmosphere download of the port (not the Emulator one).');
+  const EF = patch.eventflow, f = EF && files.get(key.slice(0, -'Bcsv/ItemParam.bcsv'.length) + EF.file);   // the port's own, unedited info file
+  if (EF && (!f || await sha256(await f()) !== EF.in_sha256))
+    throw new Error('This is not the port ' + patch.release + ' (the patch only fits that release). If it is another mod, add it under "Using other mods too".');
+  return `Jubbsticks' Additions port ${patch.release.replace(/^UJAP-/, '')}`;
 }
-if (typeof module !== 'undefined') module.exports = { build, yaz0Dec, rstcParse, rstcMerge, readZip, read7z, yaz0Raw, inflateRaw, unb64, cat, utf8, u32 };
+
+// What the page calls: one zip out (fzstd is the global the page loads before this file).
+async function make(modBytes, patch, o = {}) {
+  const fix = o.fix !== false, r = await build(modBytes, patch, d => fzstd.decompress(d), o.others || [], fix);
+  return { zip: r.zip, note: `${r.romfs} files` + (r.merged.length ? '. Size table: ' + r.merged.join('; ') : '') + (fix ? '' : '. The new fruit and gems have no icons without the memory fix') };
+}
+
+if (typeof module !== 'undefined') module.exports = { build, check, make, writeZip, MEMFIX, memFixZip, yaz0Dec, rstcParse, rstcMerge, readZip, read7z, yaz0Raw, inflateRaw, unb64, cat, utf8, u32 };

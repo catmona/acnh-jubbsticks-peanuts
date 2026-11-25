@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#cfe8b6">
-<title>Jubbsticks Additions for Peanuts</title>
+<title>Jubbsticks' Additions for Peanuts</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
@@ -51,6 +51,8 @@
   .pick:hover .pill { background: #f3fbe9; }
   .pick:active .pill { transform: translateY(2px); box-shadow: 0 1px 0 var(--leaf); }
   .pick:focus-within .pill { outline: 3px solid var(--tag); outline-offset: 2px; }
+  .fixopt { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 14px; cursor: pointer; }
+  .fixopt input { flex: none; width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--leaf); }
   .fname { color: var(--bark-soft); font-size: .92rem; overflow-wrap: anywhere; min-width: 0; }
   .step.done .fname { color: var(--ok); font-weight: 800; }
   .step.done .fname::before { content: "\2713  "; }
@@ -92,76 +94,28 @@
         <path d="M27 40l-7-4M33 31l-6-6M33 31l9 1M27 40l10 2" stroke="#4b9435" stroke-width="2.5" stroke-linecap="round"/></svg>
     </div>
     <span class="kicker">Peanuts Native &middot; ACNH 3.0.3</span>
-    <h1>Jubbsticks Additions for Peanuts</h1>
-    <p class="sub">Turns dragonloverlord's unofficial Jubbsticks Additions port (UJAP-V0.0.2) into a mod zip for Peanuts Native.
+    <h1>Jubbsticks' Additions for Peanuts</h1>
+    <p class="sub">Turns dragonloverlord's unofficial Jubbsticks Additions port (UJAP-V0.0.2) into a mod zip for Peanuts Native. Add QoL Enhancements in the same go if you like.
       It all runs in your browser; nothing is uploaded.</p>
   </header>
 
-  <ol class="steps">
-    <li class="card step" id="step-mod">
-      <span class="num" aria-hidden="true">1</span>
-      <div>
-        <h2>Get the port</h2>
-        <p>Download <code>UJAP-BetaRelease-V002-Atmosphere.7z</code> from the
-          <a href="https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port/releases">port's Releases</a>
-          (version <code>UJAP-V0.0.2</code>). Don't extract it. Please read his rules there first.</p>
-        <label class="pick"><input class="sr" type="file" id="mod" accept=".7z,.zip">
-          <span class="pill">Pick the .7z</span><span class="fname" id="mod-name">No file yet</span></label>
-      </div>
-    </li>
-    <li class="card step" id="step-patch">
-      <span class="num" aria-hidden="true">2</span>
-      <div>
-        <h2>Get the patch</h2>
-        <p>Download <code>jub-port-patch.json</code> from the
-          <a href="https://github.com/catmona/acnh-jubbsticks-peanuts/releases/latest">latest release</a>.</p>
-        <label class="pick"><input class="sr" type="file" id="patch" accept=".json,application/json">
-          <span class="pill">Pick the patch</span><span class="fname" id="patch-name">No file yet</span></label>
-      </div>
-    </li>
-    <li class="card step" id="step-others">
-      <span class="num" aria-hidden="true">3</span>
-      <div>
-        <h2>Other ACNH mods you use (optional)</h2>
-        <p>Pick their .zip or .7z files, so the size table also covers the sizes they raised. Install this page's zip in Peanuts
-          <b>before</b> your other mods: Peanuts uses the first-installed mod's copy of a file and has no reorder, so reinstall the others after it.</p>
-        <label class="pick"><input class="sr" type="file" id="others" accept=".7z,.zip" multiple>
-          <span class="pill">Pick other mods</span><span class="fname" id="others-name">None</span></label>
-      </div>
-    </li>
-    <li class="card step">
-      <span class="num" aria-hidden="true">4</span>
-      <div>
-        <h2>Make the zip</h2>
-        <button id="go" disabled>Make the Peanuts zip</button>
-      </div>
-    </li>
-  </ol>
-
-  <div class="card dialog" role="status" aria-live="polite">
-    <span class="tag">Status</span>
-    <p id="status">Pick both files.</p>
-  </div>
+  <div id="flow"></div>
 
   <section class="card then">
     <h2><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M30 6C13 16 7 37 18 55c20 2 36-14 36-34C48 11 40 7 30 6z" fill="#6dbb4f"/>
-      <path d="M18 55C24 40 31 28 44 16" fill="none" stroke="#4b9435" stroke-width="4" stroke-linecap="round"/></svg>Then, in Peanuts</h2>
-    <p>Back up your save first: this mod adds items. Open ACNH's settings, then <b>Install mod&hellip; &gt; Zip file</b>, and pick
-      <code>jubbsticks-additions-peanuts.zip</code>. Peanuts rebuilds the game with the mod, which takes about 5 minutes. Then start a new game.</p>
-    <p>It's the port as is, minus the item icons of its new fruit and gems: their UnitIcon models crash ACNH 3.0.3 on
-      Peanuts 0.1.8 (tested on an AYN Thor), so they stay out until that's fixed. Its 40 new EventFlow dialogue flows are in,
-      with its flow list merged into the 3.0.3 one. The page also puts back the vanilla 3.0.3 text the port's message files
-      lack (79 item names and one Leif line), and gives it a size table made for 3.0.3.</p>
+      <path d="M18 55C24 40 31 28 44 16" fill="none" stroke="#4b9435" stroke-width="4" stroke-linecap="round"/></svg>What you get</h2>
+    <p>The whole port: new items, new NPCs and their dialogue, stacks to 254 and unbreakable tools, with the new fruit and gem
+      icons thanks to the memory fix. The page also fills in the bits of 3.0.3 text the port is missing and gives it a size
+      table made for 3.0.3.</p>
     <p>Other mods that replace the same files (item tables, item names, the size table) will clash with it.</p>
   </section>
 
   <section class="card then">
     <h2><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="#f2a541"/>
       <path d="M32 18v18M32 44v2" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>Please keep in mind</h2>
-    <p>This is an <b>unofficial beta</b> of an unofficial port. Don't ask Jubbsticks or dragonloverlord for help with this zip:
+    <p>This is a fan port of a fan port. Don't ask Jubbsticks or dragonloverlord for help with this zip:
       if something breaks on Peanuts, open an issue <a href="https://github.com/catmona/acnh-jubbsticks-peanuts/issues">here</a>.</p>
-    <p>The port is still being fixed, and the patch only fits <code>UJAP-V0.0.2</code>. When a new version of the port comes out,
-      the page refuses it until there's a new patch here.</p>
+    <p>The page works with port version <code>UJAP-V0.0.2</code>. When a new version of the port comes out, I'll add a patch for it here.</p>
     <p>Offline play only, with your own copy of the game.</p>
   </section>
 
@@ -172,10 +126,11 @@
     <p>A fan-made helper. Not affiliated with Nintendo, Jubbsticks or the port's author. Nothing of the port is hosted here.</p>
   </footer>
 </main>
-<script>/* fzstd 0.1.1, MIT, (c) 2020 Arjun Barrett */
-!function(f){typeof module!='undefined'&&typeof exports=='object'?module.exports=f():typeof define!='undefined'&&define.amd?define(['fzstd',f]):(typeof self!='undefined'?self:this).fzstd=f()}(function(){var _e={};"use strict";var r=ArrayBuffer,t=Uint8Array,e=Uint16Array,n=Int16Array,a=Uint32Array,s=Int32Array,i=function(r,e,n){if(t.prototype.slice)return t.prototype.slice.call(r,e,n);(null==e||e<0)&&(e=0),(null==n||n>r.length)&&(n=r.length);var a=new t(n-e);return a.set(r.subarray(e,n)),a},o=function(r,e,n,a){if(t.prototype.fill)return t.prototype.fill.call(r,e,n,a);for((null==n||n<0)&&(n=0),(null==a||a>r.length)&&(a=r.length);n<a;++n)r[n]=e;return r},u=function(r,e,n,a){if(t.prototype.copyWithin)return t.prototype.copyWithin.call(r,e,n,a);for((null==n||n<0)&&(n=0),(null==a||a>r.length)&&(a=r.length);n<a;)r[e++]=r[n++]};_e.ZstdErrorCode={InvalidData:0,WindowSizeTooLarge:1,InvalidBlockType:2,FSEAccuracyTooHigh:3,DistanceTooFarBack:4,UnexpectedEOF:5};var h=["invalid zstd data","window size too large (>2046MB)","invalid block type","FSE accuracy too high","match distance too far back","unexpected EOF"],f=function(r,t,e){var n=Error(t||h[r]);if(n.code=r,Error.captureStackTrace&&Error.captureStackTrace(n,f),!e)throw n;return n},l=function(r,t,e){for(var n=0,a=0;n<e;++n)a|=r[t++]<<(n<<3);return a},v=function(r,t){return(r[t]|r[t+1]<<8|r[t+2]<<16|r[t+3]<<24)>>>0},c=function(r,e){var n=r[0]|r[1]<<8|r[2]<<16;if(3126568==n&&253==r[3]){var a=r[4],i=a>>5&1,o=a>>2&1,u=3&a,h=a>>6;8&a&&f(0);var c=6-i,b=3==u?4:u,y=l(r,c,b),p=h?1<<h:i,w=l(r,c+=b,p)+(1==h&&256),g=w;if(!i){var d=1<<10+(r[5]>>3);g=d+(d>>3)*(7&r[5])}g>2145386496&&f(1);var m=new t((1==e?w||g:e?0:g)+12);return m[0]=1,m[4]=4,m[8]=8,{b:c+p,y:0,l:0,d:y,w:e&&1!=e?e:m.subarray(12),e:g,o:new s(m.buffer,0,3),u:w,c:o,m:Math.min(131072,g)}}if(25481893==(n>>4|r[3]<<20))return v(r,4)+8;f(0)},b=function(r){for(var t=0;1<<t<=r;++t);return t-1},y=function(a,s,i){var o=4+(s<<3),u=5+(15&a[s]);u>i&&f(3);for(var h=1<<u,l=h,v=-1,c=-1,y=-1,p=h,w=new r(512+(h<<2)),g=new n(w,0,256),d=new e(w,0,256),m=new e(w,512,h),z=512+(h<<1),E=new t(w,z,h),k=new t(w,z+h);v<255&&l>0;){var A=b(l+1),T=o>>3,x=(1<<A+1)-1,F=(a[T]|a[T+1]<<8|a[T+2]<<16)>>(7&o)&x,S=(1<<A)-1,B=x-l-1,I=F&S;if(I<B?(o+=A,F=I):(o+=A+1,F>S&&(F-=B)),g[++v]=--F,-1==F?(l+=F,E[--p]=v):l-=F,!F)do{var U=o>>3;c=(a[U]|a[U+1]<<8)>>(7&o)&3,o+=2,v+=c}while(3==c)}(v>255||l)&&f(0);for(var D=0,M=(h>>1)+(h>>3)+3,W=h-1,O=0;O<=v;++O){var j=g[O];if(j<1)d[O]=-j;else for(y=0;y<j;++y){E[D]=O;do{D=D+M&W}while(D>=p)}}for(D&&f(0),y=0;y<h;++y){var C=d[E[y]]++,H=k[y]=u-b(C);m[y]=(C<<H)-h}return[o+7>>3,{b:u,s:E,n:k,t:m}]},p=function(r,n){var a=0,s=-1,i=new t(292),u=r[n],h=i.subarray(0,256),l=i.subarray(256,268),v=new e(i.buffer,268);if(u<128){var c=y(r,n+1,6),p=c[1],w=c[0]<<3,g=r[n+=u];g||f(0);for(var d=0,m=0,z=p.b,E=z,k=(++n<<3)-8+b(g);!((k-=z)<w);){var A=k>>3;if(h[++s]=p.s[d+=(r[A]|r[A+1]<<8)>>(7&k)&(1<<z)-1],(k-=E)<w)break;h[++s]=p.s[m+=(r[A=k>>3]|r[A+1]<<8)>>(7&k)&(1<<E)-1],z=p.n[d],d=p.t[d],E=p.n[m],m=p.t[m]}++s>255&&f(0)}else{for(s=u-127;a<s;a+=2){var T=r[++n];h[a]=T>>4,h[a+1]=15&T}++n}var x=0;for(a=0;a<s;++a)(I=h[a])>11&&f(0),x+=I&&1<<I-1;var F=b(x)+1,S=1<<F,B=S-x;for(B&B-1&&f(0),h[s++]=b(B)+1,a=0;a<s;++a){var I;++l[h[a]=(I=h[a])&&F+1-I]}var U=new t(S<<1),D=U.subarray(0,S),M=U.subarray(S);for(v[F]=0,a=F;a>0;--a){var W=v[a];o(M,a,W,v[a-1]=W+l[a]*(1<<F-a))}for(v[0]!=S&&f(0),a=0;a<s;++a){var O=h[a];if(O){var j=v[O];o(D,a,j,v[O]=j+(1<<F-O))}}return[n,{n:M,b:F,s:D}]},w=y(new t([81,16,99,140,49,198,24,99,12,33,196,24,99,102,102,134,70,146,4]),0,6)[1],g=y(new t([33,20,196,24,99,140,33,132,16,66,8,33,132,16,66,8,33,68,68,68,68,68,68,68,68,36,9]),0,6)[1],d=y(new t([32,132,16,66,102,70,68,68,68,68,36,73,2]),0,5)[1],m=function(r,t){for(var e=r.length,n=new s(e),a=0;a<e;++a)n[a]=t,t+=1<<r[a];return n},z=new t(new s([0,0,0,0,16843009,50528770,134678020,202050057,269422093]).buffer,0,36),E=m(z,0),k=new t(new s([0,0,0,0,0,0,0,0,16843009,50528770,117769220,185207048,252579084,16]).buffer,0,53),A=m(k,3),T=function(r,t,e){var n=r.length,a=t.length,s=r[n-1],i=(1<<e.b)-1,o=-e.b;s||f(0);for(var u=0,h=e.b,l=(n<<3)-8+b(s)-h,v=-1;l>o&&v<a;){var c=l>>3;t[++v]=e.s[u=(u<<h|(r[c]|r[c+1]<<8|r[c+2]<<16)>>(7&l))&i],l-=h=e.n[u]}l==o&&v+1==a||f(0)},x=function(r,t,e){var n=6,a=t.length+3>>2,s=a<<1,i=a+s;T(r.subarray(n,n+=r[0]|r[1]<<8),t.subarray(0,a),e),T(r.subarray(n,n+=r[2]|r[3]<<8),t.subarray(a,s),e),T(r.subarray(n,n+=r[4]|r[5]<<8),t.subarray(s,i),e),T(r.subarray(n),t.subarray(i),e)},F=function(r,n,a){var s,u=n.b,h=r[u],l=h>>1&3;n.l=1&h;var v=h>>3|r[u+1]<<5|r[u+2]<<13,c=(u+=3)+v;if(1==l){if(u>=r.length)return;return n.b=u+1,a?(o(a,r[u],n.y,n.y+=v),a):o(new t(v),r[u])}if(!(c>r.length)){if(0==l)return n.b=c,a?(a.set(r.subarray(u,c),n.y),n.y+=v,a):i(r,u,c);if(2==l){var m=r[u],F=3&m,S=m>>2&3,B=m>>4,I=0,U=0;F<2?1&S?B|=r[++u]<<4|(2&S&&r[++u]<<12):B=m>>3:(U=S,S<2?(B|=(63&r[++u])<<4,I=r[u]>>6|r[++u]<<2):2==S?(B|=r[++u]<<4|(3&r[++u])<<12,I=r[u]>>2|r[++u]<<6):(B|=r[++u]<<4|(63&r[++u])<<12,I=r[u]>>6|r[++u]<<2|r[++u]<<10)),++u;var D=a?a.subarray(n.y,n.y+n.m):new t(n.m),M=D.length-B;if(0==F)D.set(r.subarray(u,u+=B),M);else if(1==F)o(D,r[u++],M);else{var W=n.h;if(2==F){var O=p(r,u);I+=u-(u=O[0]),n.h=W=O[1]}else W||f(0);(U?x:T)(r.subarray(u,u+=I),D.subarray(M),W)}var j=r[u++];if(j){255==j?j=32512+(r[u++]|r[u++]<<8):j>127&&(j=j-128<<8|r[u++]);var C=r[u++];3&C&&f(0);for(var H=[g,d,w],L=2;L>-1;--L){var Z=C>>2+(L<<1)&3;if(1==Z){var q=new t([0,0,r[u++]]);H[L]={s:q.subarray(2,3),n:q.subarray(0,1),t:new e(q.buffer,0,1),b:0}}else 2==Z?(u=(s=y(r,u,9-(1&L)))[0],H[L]=s[1]):3==Z&&(n.t||f(0),H[L]=n.t[L])}var G=n.t=H,J=G[0],K=G[1],N=G[2],P=r[c-1];P||f(0);var Q=(c<<3)-8+b(P)-N.b,R=Q>>3,V=0,X=(r[R]|r[R+1]<<8)>>(7&Q)&(1<<N.b)-1,Y=(r[R=(Q-=K.b)>>3]|r[R+1]<<8)>>(7&Q)&(1<<K.b)-1,$=(r[R=(Q-=J.b)>>3]|r[R+1]<<8)>>(7&Q)&(1<<J.b)-1;for(++j;--j;){var _=N.s[X],rr=N.n[X],tr=J.s[$],er=J.n[$],nr=K.s[Y],ar=K.n[Y],sr=1<<nr,ir=sr+((r[R=(Q-=nr)>>3]|r[R+1]<<8|r[R+2]<<16|r[R+3]<<24)>>>(7&Q)&sr-1);R=(Q-=k[tr])>>3;var or=A[tr]+((r[R]|r[R+1]<<8|r[R+2]<<16)>>(7&Q)&(1<<k[tr])-1);R=(Q-=z[_])>>3;var ur=E[_]+((r[R]|r[R+1]<<8|r[R+2]<<16)>>(7&Q)&(1<<z[_])-1);if(R=(Q-=rr)>>3,X=N.t[X]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<rr)-1),R=(Q-=er)>>3,$=J.t[$]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<er)-1),R=(Q-=ar)>>3,Y=K.t[Y]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<ar)-1),ir>3)n.o[2]=n.o[1],n.o[1]=n.o[0],n.o[0]=ir-=3;else{var hr=ir-(0!=ur);hr?(ir=3==hr?n.o[0]-1:n.o[hr],hr>1&&(n.o[2]=n.o[1]),n.o[1]=n.o[0],n.o[0]=ir):ir=n.o[0]}for(L=0;L<ur;++L)D[V+L]=D[M+L];M+=ur;var fr=(V+=ur)-ir;if(fr<0){var lr=-fr,vr=n.e+fr;for(lr>or&&(lr=or),L=0;L<lr;++L)D[V+L]=n.w[vr+L];V+=lr,or-=lr,fr=0}for(L=0;L<or;++L)D[V+L]=D[fr+L];V+=or}if(V!=M)for(;M<D.length;)D[V++]=D[M++];else V=D.length;a?n.y+=V:D=i(D,0,V)}else if(a){if(n.y+=B,M)for(L=0;L<B;++L)D[L]=D[M+L]}else M&&(D=i(D,M));return n.b=c,D}f(2)}},S=function(r,e){if(1==r.length)return r[0];for(var n=new t(e),a=0,s=0;a<r.length;++a){var i=r[a];n.set(i,s),s+=i.length}return n};function B(r,t){for(var e=[],n=+!t,a=0,s=0;r.length;){var i=c(r,n||t);if("object"==typeof i){for(n?(t=null,i.w.length==i.u&&(e.push(t=i.w),s+=i.u)):(e.push(t),i.e=0);!i.l;){var o=F(r,i,t);o||f(5),t?i.e=i.y:(e.push(o),s+=o.length,u(i.w,0,o.length),i.w.set(o,i.w.length-o.length))}a=i.b+4*i.c}else a=i;r=r.subarray(a)}return S(e,s)}_e.decompress=B;var I=function(){function r(r){this.ondata=r,this.c=[],this.l=0,this.z=0}return r.prototype.push=function(r,e){if("number"==typeof this.s){var n=Math.min(r.length,this.s);r=r.subarray(n),this.s-=n}var a=r.length+this.l;if(!this.s){if(e){if(!a)return void this.ondata(new t(0),!0);a<5&&f(5)}else if(a<18)return this.c.push(r),void(this.l=a);if(this.l&&(this.c.push(r),r=S(this.c,a),this.c=[],this.l=0),"number"==typeof(this.s=c(r)))return this.push(r,e)}if("number"!=typeof this.s){if(a<(this.z||3))return e&&f(5),this.c.push(r),void(this.l=a);if(this.l&&(this.c.push(r),r=S(this.c,a),this.c=[],this.l=0),!this.z&&a<(this.z=2&r[this.s.b]?4:3+(r[this.s.b]>>3|r[this.s.b+1]<<5|r[this.s.b+2]<<13)))return e&&f(5),this.c.push(r),void(this.l=a);for(this.z=0;;){var s=F(r,this.s);if(!s){e&&f(5);var i=r.subarray(this.s.b);return this.s.b=0,this.c.push(i),void(this.l+=i.length)}if(this.ondata(s,!1),u(this.s.w,0,s.length),this.s.w.set(s,this.s.w.length-s.length),this.s.l){var o=r.subarray(this.s.b);return this.s=4*this.s.c,void this.push(o,e)}}}else e&&f(5)},r}();_e.Decompress=I;return _e})
-</script>
 <script>
+/* Jubbsticks Additions for Peanuts: the engine behind index.html (generated by tools/make_page.py). Exposes globalThis.JUB.
+   Includes fzstd 0.1.1, MIT, (c) 2020 Arjun Barrett */
+!function(f){typeof module!='undefined'&&typeof exports=='object'?module.exports=f():typeof define!='undefined'&&define.amd?define(['fzstd',f]):(typeof self!='undefined'?self:this).fzstd=f()}(function(){var _e={};"use strict";var r=ArrayBuffer,t=Uint8Array,e=Uint16Array,n=Int16Array,a=Uint32Array,s=Int32Array,i=function(r,e,n){if(t.prototype.slice)return t.prototype.slice.call(r,e,n);(null==e||e<0)&&(e=0),(null==n||n>r.length)&&(n=r.length);var a=new t(n-e);return a.set(r.subarray(e,n)),a},o=function(r,e,n,a){if(t.prototype.fill)return t.prototype.fill.call(r,e,n,a);for((null==n||n<0)&&(n=0),(null==a||a>r.length)&&(a=r.length);n<a;++n)r[n]=e;return r},u=function(r,e,n,a){if(t.prototype.copyWithin)return t.prototype.copyWithin.call(r,e,n,a);for((null==n||n<0)&&(n=0),(null==a||a>r.length)&&(a=r.length);n<a;)r[e++]=r[n++]};_e.ZstdErrorCode={InvalidData:0,WindowSizeTooLarge:1,InvalidBlockType:2,FSEAccuracyTooHigh:3,DistanceTooFarBack:4,UnexpectedEOF:5};var h=["invalid zstd data","window size too large (>2046MB)","invalid block type","FSE accuracy too high","match distance too far back","unexpected EOF"],f=function(r,t,e){var n=Error(t||h[r]);if(n.code=r,Error.captureStackTrace&&Error.captureStackTrace(n,f),!e)throw n;return n},l=function(r,t,e){for(var n=0,a=0;n<e;++n)a|=r[t++]<<(n<<3);return a},v=function(r,t){return(r[t]|r[t+1]<<8|r[t+2]<<16|r[t+3]<<24)>>>0},c=function(r,e){var n=r[0]|r[1]<<8|r[2]<<16;if(3126568==n&&253==r[3]){var a=r[4],i=a>>5&1,o=a>>2&1,u=3&a,h=a>>6;8&a&&f(0);var c=6-i,b=3==u?4:u,y=l(r,c,b),p=h?1<<h:i,w=l(r,c+=b,p)+(1==h&&256),g=w;if(!i){var d=1<<10+(r[5]>>3);g=d+(d>>3)*(7&r[5])}g>2145386496&&f(1);var m=new t((1==e?w||g:e?0:g)+12);return m[0]=1,m[4]=4,m[8]=8,{b:c+p,y:0,l:0,d:y,w:e&&1!=e?e:m.subarray(12),e:g,o:new s(m.buffer,0,3),u:w,c:o,m:Math.min(131072,g)}}if(25481893==(n>>4|r[3]<<20))return v(r,4)+8;f(0)},b=function(r){for(var t=0;1<<t<=r;++t);return t-1},y=function(a,s,i){var o=4+(s<<3),u=5+(15&a[s]);u>i&&f(3);for(var h=1<<u,l=h,v=-1,c=-1,y=-1,p=h,w=new r(512+(h<<2)),g=new n(w,0,256),d=new e(w,0,256),m=new e(w,512,h),z=512+(h<<1),E=new t(w,z,h),k=new t(w,z+h);v<255&&l>0;){var A=b(l+1),T=o>>3,x=(1<<A+1)-1,F=(a[T]|a[T+1]<<8|a[T+2]<<16)>>(7&o)&x,S=(1<<A)-1,B=x-l-1,I=F&S;if(I<B?(o+=A,F=I):(o+=A+1,F>S&&(F-=B)),g[++v]=--F,-1==F?(l+=F,E[--p]=v):l-=F,!F)do{var U=o>>3;c=(a[U]|a[U+1]<<8)>>(7&o)&3,o+=2,v+=c}while(3==c)}(v>255||l)&&f(0);for(var D=0,M=(h>>1)+(h>>3)+3,W=h-1,O=0;O<=v;++O){var j=g[O];if(j<1)d[O]=-j;else for(y=0;y<j;++y){E[D]=O;do{D=D+M&W}while(D>=p)}}for(D&&f(0),y=0;y<h;++y){var C=d[E[y]]++,H=k[y]=u-b(C);m[y]=(C<<H)-h}return[o+7>>3,{b:u,s:E,n:k,t:m}]},p=function(r,n){var a=0,s=-1,i=new t(292),u=r[n],h=i.subarray(0,256),l=i.subarray(256,268),v=new e(i.buffer,268);if(u<128){var c=y(r,n+1,6),p=c[1],w=c[0]<<3,g=r[n+=u];g||f(0);for(var d=0,m=0,z=p.b,E=z,k=(++n<<3)-8+b(g);!((k-=z)<w);){var A=k>>3;if(h[++s]=p.s[d+=(r[A]|r[A+1]<<8)>>(7&k)&(1<<z)-1],(k-=E)<w)break;h[++s]=p.s[m+=(r[A=k>>3]|r[A+1]<<8)>>(7&k)&(1<<E)-1],z=p.n[d],d=p.t[d],E=p.n[m],m=p.t[m]}++s>255&&f(0)}else{for(s=u-127;a<s;a+=2){var T=r[++n];h[a]=T>>4,h[a+1]=15&T}++n}var x=0;for(a=0;a<s;++a)(I=h[a])>11&&f(0),x+=I&&1<<I-1;var F=b(x)+1,S=1<<F,B=S-x;for(B&B-1&&f(0),h[s++]=b(B)+1,a=0;a<s;++a){var I;++l[h[a]=(I=h[a])&&F+1-I]}var U=new t(S<<1),D=U.subarray(0,S),M=U.subarray(S);for(v[F]=0,a=F;a>0;--a){var W=v[a];o(M,a,W,v[a-1]=W+l[a]*(1<<F-a))}for(v[0]!=S&&f(0),a=0;a<s;++a){var O=h[a];if(O){var j=v[O];o(D,a,j,v[O]=j+(1<<F-O))}}return[n,{n:M,b:F,s:D}]},w=y(new t([81,16,99,140,49,198,24,99,12,33,196,24,99,102,102,134,70,146,4]),0,6)[1],g=y(new t([33,20,196,24,99,140,33,132,16,66,8,33,132,16,66,8,33,68,68,68,68,68,68,68,68,36,9]),0,6)[1],d=y(new t([32,132,16,66,102,70,68,68,68,68,36,73,2]),0,5)[1],m=function(r,t){for(var e=r.length,n=new s(e),a=0;a<e;++a)n[a]=t,t+=1<<r[a];return n},z=new t(new s([0,0,0,0,16843009,50528770,134678020,202050057,269422093]).buffer,0,36),E=m(z,0),k=new t(new s([0,0,0,0,0,0,0,0,16843009,50528770,117769220,185207048,252579084,16]).buffer,0,53),A=m(k,3),T=function(r,t,e){var n=r.length,a=t.length,s=r[n-1],i=(1<<e.b)-1,o=-e.b;s||f(0);for(var u=0,h=e.b,l=(n<<3)-8+b(s)-h,v=-1;l>o&&v<a;){var c=l>>3;t[++v]=e.s[u=(u<<h|(r[c]|r[c+1]<<8|r[c+2]<<16)>>(7&l))&i],l-=h=e.n[u]}l==o&&v+1==a||f(0)},x=function(r,t,e){var n=6,a=t.length+3>>2,s=a<<1,i=a+s;T(r.subarray(n,n+=r[0]|r[1]<<8),t.subarray(0,a),e),T(r.subarray(n,n+=r[2]|r[3]<<8),t.subarray(a,s),e),T(r.subarray(n,n+=r[4]|r[5]<<8),t.subarray(s,i),e),T(r.subarray(n),t.subarray(i),e)},F=function(r,n,a){var s,u=n.b,h=r[u],l=h>>1&3;n.l=1&h;var v=h>>3|r[u+1]<<5|r[u+2]<<13,c=(u+=3)+v;if(1==l){if(u>=r.length)return;return n.b=u+1,a?(o(a,r[u],n.y,n.y+=v),a):o(new t(v),r[u])}if(!(c>r.length)){if(0==l)return n.b=c,a?(a.set(r.subarray(u,c),n.y),n.y+=v,a):i(r,u,c);if(2==l){var m=r[u],F=3&m,S=m>>2&3,B=m>>4,I=0,U=0;F<2?1&S?B|=r[++u]<<4|(2&S&&r[++u]<<12):B=m>>3:(U=S,S<2?(B|=(63&r[++u])<<4,I=r[u]>>6|r[++u]<<2):2==S?(B|=r[++u]<<4|(3&r[++u])<<12,I=r[u]>>2|r[++u]<<6):(B|=r[++u]<<4|(63&r[++u])<<12,I=r[u]>>6|r[++u]<<2|r[++u]<<10)),++u;var D=a?a.subarray(n.y,n.y+n.m):new t(n.m),M=D.length-B;if(0==F)D.set(r.subarray(u,u+=B),M);else if(1==F)o(D,r[u++],M);else{var W=n.h;if(2==F){var O=p(r,u);I+=u-(u=O[0]),n.h=W=O[1]}else W||f(0);(U?x:T)(r.subarray(u,u+=I),D.subarray(M),W)}var j=r[u++];if(j){255==j?j=32512+(r[u++]|r[u++]<<8):j>127&&(j=j-128<<8|r[u++]);var C=r[u++];3&C&&f(0);for(var H=[g,d,w],L=2;L>-1;--L){var Z=C>>2+(L<<1)&3;if(1==Z){var q=new t([0,0,r[u++]]);H[L]={s:q.subarray(2,3),n:q.subarray(0,1),t:new e(q.buffer,0,1),b:0}}else 2==Z?(u=(s=y(r,u,9-(1&L)))[0],H[L]=s[1]):3==Z&&(n.t||f(0),H[L]=n.t[L])}var G=n.t=H,J=G[0],K=G[1],N=G[2],P=r[c-1];P||f(0);var Q=(c<<3)-8+b(P)-N.b,R=Q>>3,V=0,X=(r[R]|r[R+1]<<8)>>(7&Q)&(1<<N.b)-1,Y=(r[R=(Q-=K.b)>>3]|r[R+1]<<8)>>(7&Q)&(1<<K.b)-1,$=(r[R=(Q-=J.b)>>3]|r[R+1]<<8)>>(7&Q)&(1<<J.b)-1;for(++j;--j;){var _=N.s[X],rr=N.n[X],tr=J.s[$],er=J.n[$],nr=K.s[Y],ar=K.n[Y],sr=1<<nr,ir=sr+((r[R=(Q-=nr)>>3]|r[R+1]<<8|r[R+2]<<16|r[R+3]<<24)>>>(7&Q)&sr-1);R=(Q-=k[tr])>>3;var or=A[tr]+((r[R]|r[R+1]<<8|r[R+2]<<16)>>(7&Q)&(1<<k[tr])-1);R=(Q-=z[_])>>3;var ur=E[_]+((r[R]|r[R+1]<<8|r[R+2]<<16)>>(7&Q)&(1<<z[_])-1);if(R=(Q-=rr)>>3,X=N.t[X]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<rr)-1),R=(Q-=er)>>3,$=J.t[$]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<er)-1),R=(Q-=ar)>>3,Y=K.t[Y]+((r[R]|r[R+1]<<8)>>(7&Q)&(1<<ar)-1),ir>3)n.o[2]=n.o[1],n.o[1]=n.o[0],n.o[0]=ir-=3;else{var hr=ir-(0!=ur);hr?(ir=3==hr?n.o[0]-1:n.o[hr],hr>1&&(n.o[2]=n.o[1]),n.o[1]=n.o[0],n.o[0]=ir):ir=n.o[0]}for(L=0;L<ur;++L)D[V+L]=D[M+L];M+=ur;var fr=(V+=ur)-ir;if(fr<0){var lr=-fr,vr=n.e+fr;for(lr>or&&(lr=or),L=0;L<lr;++L)D[V+L]=n.w[vr+L];V+=lr,or-=lr,fr=0}for(L=0;L<or;++L)D[V+L]=D[fr+L];V+=or}if(V!=M)for(;M<D.length;)D[V++]=D[M++];else V=D.length;a?n.y+=V:D=i(D,0,V)}else if(a){if(n.y+=B,M)for(L=0;L<B;++L)D[L]=D[M+L]}else M&&(D=i(D,M));return n.b=c,D}f(2)}},S=function(r,e){if(1==r.length)return r[0];for(var n=new t(e),a=0,s=0;a<r.length;++a){var i=r[a];n.set(i,s),s+=i.length}return n};function B(r,t){for(var e=[],n=+!t,a=0,s=0;r.length;){var i=c(r,n||t);if("object"==typeof i){for(n?(t=null,i.w.length==i.u&&(e.push(t=i.w),s+=i.u)):(e.push(t),i.e=0);!i.l;){var o=F(r,i,t);o||f(5),t?i.e=i.y:(e.push(o),s+=o.length,u(i.w,0,o.length),i.w.set(o,i.w.length-o.length))}a=i.b+4*i.c}else a=i;r=r.subarray(a)}return S(e,s)}_e.decompress=B;var I=function(){function r(r){this.ondata=r,this.c=[],this.l=0,this.z=0}return r.prototype.push=function(r,e){if("number"==typeof this.s){var n=Math.min(r.length,this.s);r=r.subarray(n),this.s-=n}var a=r.length+this.l;if(!this.s){if(e){if(!a)return void this.ondata(new t(0),!0);a<5&&f(5)}else if(a<18)return this.c.push(r),void(this.l=a);if(this.l&&(this.c.push(r),r=S(this.c,a),this.c=[],this.l=0),"number"==typeof(this.s=c(r)))return this.push(r,e)}if("number"!=typeof this.s){if(a<(this.z||3))return e&&f(5),this.c.push(r),void(this.l=a);if(this.l&&(this.c.push(r),r=S(this.c,a),this.c=[],this.l=0),!this.z&&a<(this.z=2&r[this.s.b]?4:3+(r[this.s.b]>>3|r[this.s.b+1]<<5|r[this.s.b+2]<<13)))return e&&f(5),this.c.push(r),void(this.l=a);for(this.z=0;;){var s=F(r,this.s);if(!s){e&&f(5);var i=r.subarray(this.s.b);return this.s.b=0,this.c.push(i),void(this.l+=i.length)}if(this.ondata(s,!1),u(this.s.w,0,s.length),this.s.w.set(s,this.s.w.length-s.length),this.s.l){var o=r.subarray(this.s.b);return this.s=4*this.s.c,void this.push(o,e)}}}else e&&f(5)},r}();_e.Decompress=I;return _e})
+;(function () {
 'use strict';
 const TID = '01006F8002326000';
 
@@ -602,7 +557,7 @@ function bymlWrite(root) {
   return out.slice(0, len);
 }
 
-async function build(modBytes, patch, zstd, others = []) {   // others: [{ name, bytes }] other mods' zips
+async function build(modBytes, patch, zstd, others = [], fix = true) {   // others: [{ name, bytes }] other mods' zips; fix: the memory fix goes in too
   if (patch.format !== 1 || patch.tid !== TID) throw new Error('That is not the jub-port-patch.json file.');
   const m = modBytes, is7z = m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C;
   if (!is7z && !(m[0] === 0x50 && m[1] === 0x4B)) throw new Error("That is not the port's download. Pick the Atmosphere .7z from the port's Releases.");
@@ -646,10 +601,12 @@ async function build(modBytes, patch, zstd, others = []) {   // others: [{ name,
     mt = r.tab; merged.push(`raised ${r.raised}, added ${r.added} from ${o.name}`);
   }
   done.set(RS, yaz0Raw(mt));
-  // EventFlow: only the listed new flows go in (the port's 2.x-era copies of 3.0.3 flows hang the load). UnitIcon models
-  // crash ACNH 3.0.3 on Peanuts 0.1.8 at the title, so they stay out. A patch without 'messages' predates the label fix
-  // of the other Message sarcs, so it keeps those out too.
-  const BAD = patch.messages ? /^(EventFlow\/|Model\/UnitIcon)/ : /^(EventFlow\/|Model\/UnitIcon|Message\/(?!String_USen))/;
+  // EventFlow: only the listed new flows go in (the port's 2.x-era copies of 3.0.3 flows hang the load). The UnitIcon models
+  // ('with_fix') overflow a fixed game heap and crash ACNH 3.0.3 at the title unless the memory fix is installed, so they go in
+  // only with it. A patch without 'with_fix' predates the fix and keeps them out; one without 'messages' predates the label
+  // fix of the other Message sarcs, so it keeps those out too.
+  const BAD = patch.with_fix ? /^EventFlow\// : patch.messages ? /^(EventFlow\/|Model\/UnitIcon)/ : /^(EventFlow\/|Model\/UnitIcon|Message\/(?!String_USen))/;
+  const needFix = new Set(fix ? [] : patch.with_fix || []);
   const EF = patch.eventflow, okFlow = new Set((EF ? EF.flows : []).map(f => 'EventFlow/' + f + '.bfevfl'));
   if (EF) {   // 3.0.3's Info byml plus the port's additions: put back the 3.0.3 values of the entries the port changed
     const d = await get(EF.file);
@@ -660,35 +617,280 @@ async function build(modBytes, patch, zstd, others = []) {   // others: [{ name,
   }
   const drop = new Set(patch.drop), out = `atmosphere/contents/${TID}/romfs/`, entries = [];
   for (const name of [...files.keys()].filter(k => k.startsWith(base)).sort()) {
-    const r = name.slice(base.length); if (drop.has(r) || done.has(r) || (BAD.test(r) && !okFlow.has(r))) continue;
+    const r = name.slice(base.length); if (drop.has(r) || needFix.has(r) || done.has(r) || (BAD.test(r) && !okFlow.has(r))) continue;
     entries.push([out + r, await files.get(name)()]);
   }
   for (const [r, d] of done) entries.push([out + r, d]);
-  return { zip: writeZip(entries), romfs: entries.length, merged };
+  return { zip: writeZip(entries), romfs: entries.length, merged, icons: (patch.with_fix || []).length - needFix.size };
 }
 
-if (typeof document !== 'undefined') {
-  const $ = id => document.getElementById(id), status = (t, cls) => { $('status').textContent = t; $('status').className = cls || ''; };
-  const ready = () => { $('go').disabled = !($('mod').files.length && $('patch').files.length); };
-  const picked = id => { const f = $(id).files[0]; $(id + '-name').textContent = f ? f.name : 'No file yet'; $('step-' + id).classList.toggle('done', !!f); ready(); };
-  $('mod').onchange = () => picked('mod'); $('patch').onchange = () => picked('patch');
-  $('others').onchange = () => { const f = [...$('others').files]; $('others-name').textContent = f.length ? f.map(x => x.name).join(', ') : 'None'; $('step-others').classList.toggle('done', !!f.length); };
-  $('go').onclick = async () => {
-    $('go').disabled = true; status('Working…');
-    try {
-      let patch;
-      try { patch = JSON.parse(await $('patch').files[0].text()); } catch { throw new Error('That is not the jub-port-patch.json file.'); }
-      const others = [];
-      for (const f of $('others').files) others.push({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
-      const r = await build(new Uint8Array(await $('mod').files[0].arrayBuffer()), patch, d => fzstd.decompress(d), others);
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(r.zip); a.download = 'jubbsticks-additions-peanuts.zip'; document.body.append(a); a.click(); a.remove();
-      status(`Done: jubbsticks-additions-peanuts.zip (${(r.zip.size / 1048576).toFixed(1)} MB, ${r.romfs} files)${r.merged.length ? '. Size table: ' + r.merged.join('; ') : ''}. Install it in Peanuts.`, 'ok');
-    } catch (e) { status(e.message, 'err'); }
-    ready();
-  };
+// The memory fix: its own small mod, one IPS for ACNH 3.0.3's main (build ff1d1c05...). It makes the game's fixed
+// draw-array heap bigger and grows its parent heap by the same amount, out of memory the game leaves unused. Same bytes
+// as the standalone download in the QoL repo (tools/make_memfix.py there).
+const MEMFIX = { name: 'acnh-memory-fix-peanuts.zip', set: 'acnh-memory-fix', build_id: 'ff1d1c05670db6021c85b624a710b963',
+                 ips: 'SVBTMzIBVjygAAQAgKBSBATXeAAEAABwJkVFT0Y=' };
+const memFixZip = () => writeZip([[`atmosphere/exefs_patches/${MEMFIX.set}/${MEMFIX.build_id}.ips`, unb64(MEMFIX.ips)]]);
+
+// Cheap check used when a file is picked: is this the port's download that the patch fits? Throws a friendly message if not.
+// A .7z is taken on trust (unpacking it takes seconds; build() checks every file again). A zip is checked by its ItemParam.
+async function check(modBytes, patch) {
+  if (patch.format !== 1 || patch.tid !== TID) throw new Error('That is not the jub-port-patch.json file.');
+  const m = modBytes;
+  if (m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C) return `Jubbsticks' Additions port ${patch.release.replace(/^UJAP-/, '')}`;
+  const files = await readZip(m);
+  const key = [...files.keys()].find(n => n.endsWith('romfs/Bcsv/ItemParam.bcsv'));
+  if (!key) throw new Error('No romfs/Bcsv/ItemParam.bcsv in that file. Pick the Atmosphere download of the port (not the Emulator one).');
+  const EF = patch.eventflow, f = EF && files.get(key.slice(0, -'Bcsv/ItemParam.bcsv'.length) + EF.file);   // the port's own, unedited info file
+  if (EF && (!f || await sha256(await f()) !== EF.in_sha256))
+    throw new Error('This is not the port ' + patch.release + ' (the patch only fits that release). If it is another mod, add it under "Using other mods too".');
+  return `Jubbsticks' Additions port ${patch.release.replace(/^UJAP-/, '')}`;
 }
-if (typeof module !== 'undefined') module.exports = { build, yaz0Dec, rstcParse, rstcMerge, readZip, read7z, yaz0Raw, inflateRaw, unb64, cat, utf8, u32 };
+
+// What the page calls: one zip out (fzstd is the global the page loads before this file).
+async function make(modBytes, patch, o = {}) {
+  const fix = o.fix !== false, r = await build(modBytes, patch, d => fzstd.decompress(d), o.others || [], fix);
+  return { zip: r.zip, note: `${r.romfs} files` + (r.merged.length ? '. Size table: ' + r.merged.join('; ') : '') + (fix ? '' : '. The new fruit and gems have no icons without the memory fix') };
+}
+
+if (typeof module !== 'undefined') module.exports = { build, check, make, writeZip, MEMFIX, memFixZip, yaz0Dec, rstcParse, rstcMerge, readZip, read7z, yaz0Raw, inflateRaw, unb64, cat, utf8, u32 };
+
+globalThis.JUB = { make, check, build, MEMFIX, memFixZip, writeZip };
+})();
+</script>
+<script>window.FLOW_SELF = "jub";</script>
+<script>
+/* The shared 3-step flow of the QoL and Jubbsticks pages: get downloads -> pick them -> make and install.
+   Kept byte-identical in both repos (acnh-qol-peanuts/docs/flow.js and acnh-jubbsticks-peanuts/docs/flow.js).
+   The page sets window.FLOW_SELF ('qol' or 'jub') and has already loaded its own engine (QOL / JUB); the other mod's engine and
+   patch come from the other repo's GitHub Pages folder (same origin) and are only fetched once a file for that mod is picked. */
+(function () {
+'use strict';
+const SELF = window.FLOW_SELF, TID = '01006F8002326000';
+const MODS = {
+  qol: { name: 'QoL Enhancements', global: 'QOL', zip: 'qol-enhancements-peanuts.zip', engine: '/acnh-qol-peanuts/qol.js',
+         patchLocal: 'qol-peanuts-patch.json', patchAbs: '/acnh-qol-peanuts/qol-peanuts-patch.json', patchName: 'qol-peanuts-patch.json',
+         patchPage: 'https://github.com/catmona/acnh-qol-peanuts/releases/latest',
+         get: `<b>QoL Enhancements</b>: on <a href="https://gamebanana.com/mods/727637" target="_blank" rel="noopener">GameBanana</a>
+               get <b>Main download (Modded Switch)</b> (<code>qol-switch-v1_1_0-acnh-v3_0_3.zip</code>). Don't unzip it.`,
+         want: 'Want QoL Enhancements too?' },
+  jub: { name: "Jubbsticks' Additions", global: 'JUB', zip: 'jubbsticks-additions-peanuts.zip', engine: '/acnh-jubbsticks-peanuts/engine.js',
+         patchLocal: 'jub-port-patch.json', patchAbs: '/acnh-jubbsticks-peanuts/jub-port-patch.json', patchName: 'jub-port-patch.json',
+         patchPage: 'https://github.com/catmona/acnh-jubbsticks-peanuts/releases/latest',
+         get: `<b>Jubbsticks' Additions port</b>: on the port's <a href="https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port/releases" target="_blank" rel="noopener">Releases page</a>
+               get <code>UJAP-BetaRelease-V002-Atmosphere.7z</code>. Read the rules in its README first, and don't extract the file.`,
+         want: "Want Jubbsticks' Additions too?" },
+};
+const OTHER = SELF === 'qol' ? 'jub' : 'qol', ORDER = ['qol', 'jub'];   // install order
+
+const css = document.createElement('style');
+css.textContent = `
+  .dl { margin: 10px 0 0; padding: 10px 14px; border-radius: 16px; background: #fff; border: 2px solid var(--line); }
+  .dl p { margin: 0; }
+  .dl.opt { background: transparent; border-style: dashed; }
+  .dl .want { font: 600 1rem Fredoka, Nunito, sans-serif; margin-bottom: 4px; }
+  .rows { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+  .row { padding: 8px 12px; border-radius: 14px; background: #fff; border: 2px solid var(--line); font-weight: 800; overflow-wrap: anywhere; }
+  .row small { display: block; font-weight: 500; color: var(--bark-soft); }
+  .row.ok { border-color: var(--leaf); color: var(--ok); }
+  .row.bad { border-color: var(--err); color: var(--err); }
+  .patchbox { margin-top: 10px; padding: 10px 14px; border-radius: 16px; background: var(--cream-2); }
+  details.others { margin-top: 12px; padding: 8px 14px; border-radius: 16px; border: 2px dashed var(--line); }
+  details.others summary { cursor: pointer; font: 600 1rem Fredoka, Nunito, sans-serif; }
+  details.others p { margin: 8px 0 0; font-size: .95rem; }
+  .out { list-style: none; counter-reset: o; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
+  .out li { counter-increment: o; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+  .out li::before { content: counter(o); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+                    background: var(--leaf); color: #fff; font: 600 1rem Fredoka, sans-serif; }
+  .out li.more::before { background: var(--bark-soft); }
+  .out small { display: block; color: var(--bark-soft); font-weight: 500; }
+  .out b { overflow-wrap: anywhere; }
+  .dlb { width: auto; margin: 0; padding: 8px 16px; font-size: 1rem; }
+  #results { margin-top: 18px; }
+  #results h2 { margin-top: 0; }
+`;
+document.head.append(css);
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const tick = () => new Promise(r => setTimeout(r, 30));
+const save = (blob, name) => {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove();
+};
+const mb = n => (n / 1048576).toFixed(1) + ' MB';
+
+// ---- markup
+const getBlock = (k, opt) => opt
+  ? `<div class="dl opt"><p class="want">${MODS[k].want} <span style="font-weight:500">(optional)</span></p><p>${MODS[k].get}</p></div>`
+  : `<div class="dl"><p>${MODS[k].get}</p></div>`;
+const patchBox = k => `<div class="patchbox" id="pb-${k}" hidden>
+    <p>I couldn't fetch the ${MODS[k].name} patch by myself (are you opening this page from a file?). Download
+      <code>${MODS[k].patchName}</code> from the <a href="${MODS[k].patchPage}" target="_blank" rel="noopener">latest release</a> and pick it here:</p>
+    <label class="pick"><input class="sr" type="file" id="pf-${k}" accept=".json,application/json">
+      <span class="pill">Pick the patch file</span><span class="fname" id="pfn-${k}"></span></label></div>`;
+
+$('flow').innerHTML = `
+  <ol class="steps">
+    <li class="card step" id="step-1">
+      <span class="num" aria-hidden="true">1</span>
+      <div>
+        <h2>Get your downloads</h2>
+        <p>Download the original file from its own page. Keep it as it is: don't unzip or extract it.</p>
+        ${getBlock(SELF, false)}
+        ${getBlock(OTHER, true)}
+      </div>
+    </li>
+    <li class="card step" id="step-2">
+      <span class="num" aria-hidden="true">2</span>
+      <div>
+        <h2>Pick your downloads</h2>
+        <p>Pick ${SELF === 'qol' ? 'the QoL zip, and the port file too if you got it' : 'the port file, and the QoL zip too if you got it'}.
+          You can choose both at once. I'll see which is which.</p>
+        <label class="pick"><input class="sr" type="file" id="files" accept=".zip,.7z" multiple>
+          <span class="pill" id="files-pill">Pick downloads</span></label>
+        <ul class="rows" id="rows" aria-live="polite"></ul>
+        ${patchBox(SELF)}${patchBox(OTHER)}
+        <details class="others" id="others-box" hidden>
+          <summary>Using other mods too (like ACNH Combined)?</summary>
+          <p>Pick their .zip or .7z files here, so the size table also covers the sizes they raised. Install the zips from this page
+            <b>before</b> your other mods: Peanuts uses the first-installed mod's copy of a file and has no reorder, so reinstall the others after.</p>
+          <label class="pick"><input class="sr" type="file" id="others" accept=".7z,.zip" multiple>
+            <span class="pill">Pick other mods</span><span class="fname" id="others-name">None</span></label>
+        </details>
+      </div>
+    </li>
+    <li class="card step" id="step-3">
+      <span class="num" aria-hidden="true">3</span>
+      <div>
+        <h2>Make and install</h2>
+        <label class="fixopt"><input type="checkbox" id="fix" checked>
+          <span><b>Also make the memory fix</b> (recommended). It's a tiny extra mod that gives the game more room for item pictures,
+            so big mods like Jubbsticks' Additions don't crash it or lose their icons.</span></label>
+        <button id="go" disabled>Make my Peanuts zips</button>
+      </div>
+    </li>
+  </ol>
+  <div class="card dialog" role="status" aria-live="polite">
+    <span class="tag">Status</span>
+    <p id="status">Pick your download to begin.</p>
+  </div>
+  <section class="card" id="results" hidden>
+    <h2>Install these in Peanuts, in this order</h2>
+    <p>They should have downloaded by themselves. If one didn't, use its button.</p>
+    <ol class="out" id="out"></ol>
+    <p style="margin-top:14px">In Peanuts, long-press ACNH, choose <b>Install mod&hellip; &gt; Zip file</b> and add each zip in that order.
+      Peanuts then rebuilds the game, which takes about 5 minutes.</p>
+    <p id="jub-note" hidden>Jubbsticks' Additions adds items, so back up your save first. Start a new game after.</p>
+  </section>`;
+
+// ---- engines and patches (the other mod's come from the other repo's Pages folder)
+const engineOf = async k => {
+  const m = MODS[k];
+  if (!window[m.global]) await new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = m.engine; s.onload = res;
+    s.onerror = () => rej(new Error(`I couldn't load the ${m.name} part of this page. Check your connection. (This also happens if the page is opened from a file instead of the web.)`));
+    document.head.append(s);
+  });
+  return window[m.global];
+};
+const patches = {};
+const patchOf = k => patches[k] || (patches[k] = (async () => {
+  try {
+    const r = await fetch(k === SELF ? MODS[k].patchLocal : MODS[k].patchAbs, { cache: 'no-cache' });
+    if (!r.ok) throw new Error('http ' + r.status);
+    return await r.json();
+  } catch {
+    $('pb-' + k).hidden = false;
+    return new Promise(res => { $('pf-' + k).onchange = async () => {
+      const f = $('pf-' + k).files[0]; if (!f) return;
+      let j; try { j = JSON.parse(await f.text()); } catch { $('pfn-' + k).textContent = 'That is not a JSON file.'; return; }
+      $('pfn-' + k).textContent = f.name; patches[k] = Promise.resolve(j); res(j);
+    }; });
+  }
+})());
+
+// ---- telling the downloads apart by what is inside
+const zipNames = u => {
+  const v = new DataView(u.buffer, u.byteOffset, u.byteLength); let e = u.length - 22;
+  while (e >= 0 && e > u.length - 70000 && v.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0 || v.getUint32(e, true) !== 0x06054b50) return null;
+  const n = v.getUint16(e + 10, true), dec = new TextDecoder(), out = []; let c = v.getUint32(e + 16, true);
+  for (let i = 0; i < n && c + 46 <= u.length && v.getUint32(c, true) === 0x02014b50; i++) {
+    const nl = v.getUint16(c + 28, true), el = v.getUint16(c + 30, true), cl = v.getUint16(c + 32, true);
+    out.push(dec.decode(u.subarray(c + 46, c + 46 + nl))); c += 46 + nl + el + cl;
+  }
+  return out;
+};
+const is7z = u => u[0] === 0x37 && u[1] === 0x7A && u[2] === 0xBC && u[3] === 0xAF && u[4] === 0x27 && u[5] === 0x1C;
+const sniff = u => {
+  if (is7z(u)) return 'jub';
+  const names = u[0] === 0x50 && u[1] === 0x4B ? zipNames(u) : null;
+  if (names) {
+    if (names.some(n => n.endsWith(`atmosphere/contents/${TID}/exefs/subsdk6`))) return 'qol';
+    if (names.some(n => n.endsWith('romfs/Bcsv/ItemParam.bcsv'))) return 'jub';
+  }
+  throw new Error("I don't know this file. I need the QoL zip (Main download, Modded Switch) or the port's .7z. Keep them zipped.");
+};
+
+// ---- the picker
+const picked = {}, rows = []; let seq = 0;
+const render = () => {
+  $('rows').innerHTML = rows.map(r => `<li class="row ${r.cls}">${r.cls === 'ok' ? '&#10003; ' : r.cls === 'bad' ? '&#10007; ' : ''}${esc(r.text)}<small>${esc(r.sub)}</small></li>`).join('');
+  $('step-2').classList.toggle('done', !!Object.keys(picked).length);
+  $('go').disabled = !Object.keys(picked).length || !!$('go').dataset.busy;
+  $('others-box').hidden = !picked.jub;
+  $('files-pill').textContent = Object.keys(picked).length ? 'Pick more' : 'Pick downloads';
+};
+const status = (t, cls) => { $('status').textContent = t; $('status').className = cls || ''; };
+
+$('files').onchange = async () => {
+  const list = [...$('files').files]; $('files').value = '';
+  if (!list.length) return;
+  for (let i = rows.length - 1; i >= 0; i--) if (rows[i].cls !== 'ok') rows.splice(i, 1);
+  for (const f of list) {
+    const row = { cls: 'wait', text: 'Looking at it…', sub: f.name, id: ++seq }; rows.push(row); render();
+    try {
+      const u = new Uint8Array(await f.arrayBuffer()), k = sniff(u);
+      row.text = `Checking it's ${MODS[k].name}…`; render();
+      const [eng, patch] = await Promise.all([engineOf(k), patchOf(k)]);
+      row.text = await eng.check(u, patch);
+      if (picked[k]) { const old = rows.findIndex(r => r.id === picked[k].row); if (old >= 0) rows.splice(old, 1); }
+      picked[k] = { file: f, row: row.id }; row.cls = 'ok';
+    } catch (e) { row.cls = 'bad'; row.text = e.message; }
+    render();
+  }
+  status(Object.keys(picked).length ? 'Ready. Press "Make my Peanuts zips".' : 'Pick your download to begin.');
+};
+$('others').onchange = () => { const f = [...$('others').files]; $('others-name').textContent = f.length ? f.map(x => x.name).join(', ') : 'None'; };
+
+// ---- make everything
+$('go').onclick = async () => {
+  $('go').dataset.busy = '1'; render(); $('results').hidden = true;
+  const outs = [], fix = $('fix').checked;
+  try {
+    for (const k of ORDER) {
+      if (!picked[k]) continue;
+      status(`Making ${MODS[k].zip}…`); await tick();
+      const [eng, patch] = await Promise.all([engineOf(k), patchOf(k)]);
+      const others = [];
+      if (k === 'jub') for (const f of $('others').files) others.push({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
+      const r = await eng.make(new Uint8Array(await picked[k].file.arrayBuffer()), patch, { fix, others });
+      outs.push({ name: MODS[k].zip, blob: r.zip, note: r.note });
+    }
+    if (fix) { const own = window[MODS[SELF].global]; outs.push({ name: own.MEMFIX.name, blob: own.memFixZip(), note: 'Gives the game more room for item pictures.' }); }
+    $('out').innerHTML = outs.map((o, i) => `<li><span><b>${esc(o.name)}</b><small>${mb(o.blob.size)}. ${esc(o.note)}</small></span>
+        <button class="dlb" data-i="${i}">Download</button></li>`).join('') + '<li class="more"><span><b>Then any other mods you use</b></span></li>';
+    for (const b of $('out').querySelectorAll('.dlb')) b.onclick = () => save(outs[b.dataset.i].blob, outs[b.dataset.i].name);
+    $('jub-note').hidden = !picked.jub; $('results').hidden = false;
+    outs.forEach((o, i) => setTimeout(() => save(o.blob, o.name), i * 400));
+    status(`Done. ${outs.length} zip${outs.length > 1 ? 's' : ''} made. Install them in the order below.`, 'ok');
+    $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) { status(e.message, 'err'); }
+  delete $('go').dataset.busy; render();
+};
+
+patchOf(SELF);   // fetch our own patch now, so a missing one shows its fallback picker straight away
+render();
+})();
 </script>
 </body>
 </html>

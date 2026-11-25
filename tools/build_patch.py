@@ -1,6 +1,7 @@
 """Make jub-port-patch.json from the merged build. Usage: build_patch.py <his romfs dir> <merged romfs dir> <out.json>
 The patch holds only byte edits, text snippets and the size table; none of his files.
-'strings' is String_USen; 'messages' the other Message sarcs that change (same shape; an added label may carry its ATR1 entry)."""
+'strings' is String_USen; 'messages' the other Message sarcs that change (same shape; an added label may carry its ATR1 entry).
+'with_fix': the port's Model/UnitIcon* models. The page ships them only with the memory fix (they crash 3.0.3 at the title without it)."""
 import sys,os,json,base64,hashlib,zlib,struct,zstandard
 sys.path.insert(0,os.path.dirname(os.path.abspath(__file__))); import sarc,msbt,yaz0,parse
 IN,OUT,dst=sys.argv[1:4]; b64=lambda b:base64.b64encode(b).decode(); sha=lambda b:hashlib.sha256(b).hexdigest()
@@ -9,7 +10,7 @@ def walk(R):
 A,B=walk(IN),walk(OUT); rd=lambda R,r:open(os.path.join(R,r),'rb').read()
 assert not (B-A-{'System/Resource/ResourceSizeTable.srsizetable'}),B-A
 P={'format':1,'tid':'01006F8002326000','release':'UJAP-V0.0.2'}
-P['drop']=sorted(A-B); changed=sorted(r for r in A&B if rd(IN,r)!=rd(OUT,r))
+P['drop']=sorted(A-B); P['with_fix']=sorted(r for r in B if r.startswith('Model/UnitIcon')); changed=sorted(r for r in A&B if rd(IN,r)!=rd(OUT,r))
 P['bcsv']={}
 for r in changed:
     if not r.endswith('.bcsv'): continue
@@ -41,4 +42,4 @@ d,v,E,tail=parse.load(os.path.join(OUT,'System/Resource/ResourceSizeTable.srsize
 raw=struct.pack('<I',v)+b''.join(struct.pack('<III',*e) for e in E)+tail   # entries sorted by crc already
 co=zlib.compressobj(9,zlib.DEFLATED,-15); z=co.compress(raw)+co.flush()
 P['rstb']={'version':v,'count':len(E),'tail_len':len(tail),'data':b64(z),'content_sha256':sha(d)}
-json.dump(P,open(dst,'w'),separators=(',',':')); print('patch',os.path.getsize(dst)//1024,'KB; drop',len(P['drop']),'bcsv',{k:len(x['edits']) for k,x in P['bcsv'].items()},'strings',{k:(len(x['add']),len(x['set'])) for k,x in S.items()},'messages',{m['file']:{k:len(x['add']) for k,x in m['msbt'].items()} for m in P['messages']})
+json.dump(P,open(dst,'w'),separators=(',',':')); print('patch',os.path.getsize(dst)//1024,'KB; drop',len(P['drop']),'with_fix',len(P['with_fix']),'bcsv',{k:len(x['edits']) for k,x in P['bcsv'].items()},'strings',{k:(len(x['add']),len(x['set'])) for k,x in S.items()},'messages',{m['file']:{k:len(x['add']) for k,x in m['msbt'].items()} for m in P['messages']})

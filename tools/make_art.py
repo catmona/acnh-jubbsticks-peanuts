@@ -15,7 +15,7 @@ GRASS = ("url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' wid
          "%3Cpath d='M30 12c-9 6-11 17-5 26 9 0 15-8 14-18-2-4-5-7-9-8z'/%3E%3Cpath d='M90 72c-9 6-11 17-5 26 9 0 15-8 14-18-2-4-5-7-9-8z' transform='rotate(35 90 85)'/%3E"
          "%3C/g%3E%3Cg fill='%23ffffff' opacity='.45'%3E%3Ccircle cx='88' cy='22' r='3'/%3E%3Ccircle cx='24' cy='88' r='3'/%3E%3C/g%3E%3C/svg%3E\")")
 
-# (file, title, bullets, accent): accent green for features, orange for the honest "not yet" card
+# (file, title, bullets, accent): accent green for features, orange for an honest "not yet" card when one is needed
 CARDS = [
     ('new-stuff', 'Jubbsticks\' Additions', ['New items, new NPCs and new interactions',
                                             'Lots to discover and unlock', 'English only for now'], '#6dbb4f'),
@@ -24,9 +24,9 @@ CARDS = [
                                  'Done with romfs edits only (dragonloverlord\'s addition)'], '#6dbb4f'),
     ('port', 'From the port', ['All tools are unbreakable',
                                'The new tool and balloon DIYs stay out of hotel delivery requests'], '#6dbb4f'),
-    ('not-yet', 'Not working on Peanuts yet', ['Item icons for the new fruit and gems',
-                                                'Their UnitIcon models crash ACNH 3.0.3 on Peanuts 0.1.8',
-                                                'The patcher leaves them out until that\'s fixed'], '#f2a541'),
+    ('icons', 'New fruit and gem icons', ['The new fruit and gems get their own pocket icons',
+                                          'They need the memory fix, a tiny extra mod the patcher gives you too',
+                                          'Without it, the patcher leaves the icons out so the game doesn\'t crash'], '#6dbb4f'),
 ]
 
 CARD_CSS = """
@@ -58,7 +58,7 @@ h1 b {{ color: #4b9435; font-weight: 600; }}
 </style></head><body>
 <svg class="big" viewBox="0 0 64 64">{LEAF[24:]}
 <div class="card"><div class="badge">{LEAF}</div>
-<span class="kick">ACNH 3.0.3 &middot; PEANUTS NATIVE</span><span class="unoff">UNOFFICIAL BETA</span>
+<span class="kick">ACNH 3.0.3 &middot; PEANUTS NATIVE</span><span class="unoff">FAN PORT</span>
 <h1>Jubbsticks' Additions<br><b>for Peanuts</b></h1>
 <p class="sub">dragonloverlord's unofficial port, running on Android</p>
 <div class="pills"><span>New items</span><span>New NPCs</span><span>Stacks to 254</span><span>Unbreakable tools</span></div>

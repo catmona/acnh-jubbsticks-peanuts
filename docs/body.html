@@ -1,68 +1,20 @@
-  <ol class="steps">
-    <li class="card step" id="step-mod">
-      <span class="num" aria-hidden="true">1</span>
-      <div>
-        <h2>Get the port</h2>
-        <p>Download <code>UJAP-BetaRelease-V002-Atmosphere.7z</code> from the
-          <a href="https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port/releases">port's Releases</a>
-          (version <code>UJAP-V0.0.2</code>). Don't extract it. Please read his rules there first.</p>
-        <label class="pick"><input class="sr" type="file" id="mod" accept=".7z,.zip">
-          <span class="pill">Pick the .7z</span><span class="fname" id="mod-name">No file yet</span></label>
-      </div>
-    </li>
-    <li class="card step" id="step-patch">
-      <span class="num" aria-hidden="true">2</span>
-      <div>
-        <h2>Get the patch</h2>
-        <p>Download <code>jub-port-patch.json</code> from the
-          <a href="https://github.com/catmona/acnh-jubbsticks-peanuts/releases/latest">latest release</a>.</p>
-        <label class="pick"><input class="sr" type="file" id="patch" accept=".json,application/json">
-          <span class="pill">Pick the patch</span><span class="fname" id="patch-name">No file yet</span></label>
-      </div>
-    </li>
-    <li class="card step" id="step-others">
-      <span class="num" aria-hidden="true">3</span>
-      <div>
-        <h2>Other ACNH mods you use (optional)</h2>
-        <p>Pick their .zip or .7z files, so the size table also covers the sizes they raised. Install this page's zip in Peanuts
-          <b>before</b> your other mods: Peanuts uses the first-installed mod's copy of a file and has no reorder, so reinstall the others after it.</p>
-        <label class="pick"><input class="sr" type="file" id="others" accept=".7z,.zip" multiple>
-          <span class="pill">Pick other mods</span><span class="fname" id="others-name">None</span></label>
-      </div>
-    </li>
-    <li class="card step">
-      <span class="num" aria-hidden="true">4</span>
-      <div>
-        <h2>Make the zip</h2>
-        <button id="go" disabled>Make the Peanuts zip</button>
-      </div>
-    </li>
-  </ol>
-
-  <div class="card dialog" role="status" aria-live="polite">
-    <span class="tag">Status</span>
-    <p id="status">Pick both files.</p>
-  </div>
+  <div id="flow"></div>
 
   <section class="card then">
     <h2><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M30 6C13 16 7 37 18 55c20 2 36-14 36-34C48 11 40 7 30 6z" fill="#6dbb4f"/>
-      <path d="M18 55C24 40 31 28 44 16" fill="none" stroke="#4b9435" stroke-width="4" stroke-linecap="round"/></svg>Then, in Peanuts</h2>
-    <p>Back up your save first: this mod adds items. Open ACNH's settings, then <b>Install mod&hellip; &gt; Zip file</b>, and pick
-      <code>jubbsticks-additions-peanuts.zip</code>. Peanuts rebuilds the game with the mod, which takes about 5 minutes. Then start a new game.</p>
-    <p>It's the port as is, minus the item icons of its new fruit and gems: their UnitIcon models crash ACNH 3.0.3 on
-      Peanuts 0.1.8 (tested on an AYN Thor), so they stay out until that's fixed. Its 40 new EventFlow dialogue flows are in,
-      with its flow list merged into the 3.0.3 one. The page also puts back the vanilla 3.0.3 text the port's message files
-      lack (79 item names and one Leif line), and gives it a size table made for 3.0.3.</p>
+      <path d="M18 55C24 40 31 28 44 16" fill="none" stroke="#4b9435" stroke-width="4" stroke-linecap="round"/></svg>What you get</h2>
+    <p>The whole port: new items, new NPCs and their dialogue, stacks to 254 and unbreakable tools, with the new fruit and gem
+      icons thanks to the memory fix. The page also fills in the bits of 3.0.3 text the port is missing and gives it a size
+      table made for 3.0.3.</p>
     <p>Other mods that replace the same files (item tables, item names, the size table) will clash with it.</p>
   </section>
 
   <section class="card then">
     <h2><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="#f2a541"/>
       <path d="M32 18v18M32 44v2" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>Please keep in mind</h2>
-    <p>This is an <b>unofficial beta</b> of an unofficial port. Don't ask Jubbsticks or dragonloverlord for help with this zip:
+    <p>This is a fan port of a fan port. Don't ask Jubbsticks or dragonloverlord for help with this zip:
       if something breaks on Peanuts, open an issue <a href="https://github.com/catmona/acnh-jubbsticks-peanuts/issues">here</a>.</p>
-    <p>The port is still being fixed, and the patch only fits <code>UJAP-V0.0.2</code>. When a new version of the port comes out,
-      the page refuses it until there's a new patch here.</p>
+    <p>The page works with port version <code>UJAP-V0.0.2</code>. When a new version of the port comes out, I'll add a patch for it here.</p>
     <p>Offline play only, with your own copy of the game.</p>
   </section>
 

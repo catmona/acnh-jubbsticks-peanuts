@@ -1,2 +1,5 @@
 __pycache__/
 dist/
+
+# Patch files hold vanilla game data: they ship as release assets, and the Pages workflow copies them into the site.
+*-patch.json
