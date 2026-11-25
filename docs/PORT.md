@@ -47,6 +47,47 @@ With QoL, Jubbsticks and full Combined, the title loads but the island load cras
 
 The 6 ItemOutfitInfo rows are Combined's unbreakable gold tools. They come from "Unbreakable Golden Tools v3.0.0" (`goldtoolsunbreakable-v300.zip`), and its only file is `romfs/Bcsv/ItemOutfitInfo.bcsv`. That file sets the uses field (`68db76c2`) of rows 76, 78, 80, 82, 84 and 86, the golden rod, axe, watering can, shovel, net and slingshot, to 65535. Jubbsticks has its own version: its ItemOutfitInfo sets all 23 tool rows to 65535, so every tier, gold included, is unbreakable (vanilla uses: rod 10/30/90, axe 3/40/100/200, watering can 20/60/180, shovel 40/50/100/200, net 10/30/60/90, slingshot 10/20/60). In Peanuts the first mod in the list that has a file wins, and Jubbsticks comes first, so Combined's copy was never read. Gold tools are now out of Combined anyway. Combined is built by `acnhtree.py`, which copies each path from the highest-ranked mod that ships it. No other source mod and none of the hand-merged files has ItemOutfitInfo, so building without gold-tools gives the old build minus that one file. That is 154 files, SHA-256 `b8ea3745e419e7c4...`. The size table entry can stay, because the file is still a vanilla file (Jubbsticks or the base game supplies it). Nothing changes in game.
 
+## Audit of the port against vanilla 3.0.3
+
+`tools/audit_port.py` compares every file of the port's V0.0.2 release (the same bytes as its `main` on Nov 25, 2026) with vanilla 3.0.3 and with Jubbsticks 1.0.11, the 2.0-era original. Of the port's 1,335 romfs files, 123 replace a vanilla file:
+
+| Folder | Replaces vanilla | Byte-identical to 1.0.11 |
+| --- | --- | --- |
+| `EventFlow/` | 32 (31 flows plus the flow list) | 28 |
+| `Model/` | 40 | 40 |
+| `Param/` | 18 | 17 |
+| `Bcsv/` | 13 | 0 |
+| `Message/` | 18 | 0 (the build puts back their missing labels, see above) |
+| `Stage/`, `System/` | 2 | 0 |
+
+The item tables were redone on 3.0.3: every vanilla row id is still there. Most flows were not redone. 28 of the 31 replaced flows are the 2.0-era files, and so they drop what 3.0 added to them. These are the strings in vanilla 3.0.3 that are missing from the port's copy:
+
+| Flow | 3.0 content the port's copy lacks | What Jubbsticks adds |
+| --- | --- | --- |
+| `Ftr_Working` (workbench) | crafting several at once (`IsDIYMultiCreation`), materials from storage (`CanUseStorageMaterial`, `NoticeUsingStorageForRemake`), the hotel tutorial | bulk fish bait, which 3.0 now does natively. The port's README says this flow was ported, but it is the 1.0.11 file |
+| `SNPC_slo_00_Peddling`, `SNPC_slo_02_Commune` (Leif) | 3.0's cheaper weeding (`SloExplainWeedingPriceDown`, `SloExplainWeeding_After3`, label `SP_slo:400`) | bamboo cultivation. The port edited these two, but from the 2.0 files |
+| `SNPC_pck` (Pascal) | `cCarnivalFeather`, `cSwap` | a feather trade |
+| `SNPC_fox_11_Commune_Lorrery` (Redd, Harv's Island) | `FoxCommuneBook`, `FoxCommuneFood`, `FoxCommuneSubtool` prizes | the new fruit and the lucky prizes |
+| `SNPC_pge` (Brewster) | `NetIsSwitch2EditionSession`, `SetMuseumCafeOver8CameraDemoParam` | the gyroid flag |
+| `Player_GetDemo_Once` | hotel tickets and coupons, `PlayOnceAfterUpdateAOC`, `TapDreamFirstTalk` | one message |
+| `Player_GetDemo`, `Player_GetDemo_Recipe_DIY` | `cCloudIslandAll` | the clam count, the sturdy tool recipes |
+| `SNPC_hgc_01_NowQuest` | the hotel mannequin rental, `SP_hgc:181`-`182` | one achievement flag |
+| `NNPC_Talk_General` (villager small talk) | 20 strings, among them `IsMidNight`, `ForMileTicketSupport_Chk`, `ContinuousTalkCount` | nothing visible |
+| `Tutorials_Prologue_Tkk` (new game) | `BundledEdition`, `VersionUp`, and 31 more strings | a Tom Nook dream |
+| `Obj_RcoMachine_MileExchange`, `SNPC_doc_52_CommuneIsland` | 8 and 12 events | Nook Miles rewards, the Mole flag |
+
+This compares strings, not flow logic. A missing string shows that the port's file is older than 3.0.3, but how much each loss matters in play still needs checking in game.
+
+### The Roost
+
+The port's Roost is Jubbsticks 1.0.11's, unchanged. It is 9 files: the room model `Model/IdrMuseumCafe00`, 7 loose `IdrMuseumCafe00_Tex_*` texture files, and `Param/Field/StagePreset/IdrMuseumCafe.byml`. The preset adds one object to vanilla's 12: item 11111 at (17, 25), the bulletin board of gyroids not yet given to Brewster (`Ftr_Bromide` checks `cMuseumCafe`). The board only shows a list. The gyroid trade itself is in Brewster's flows (`SNPC_pge`, `SNPC_pge_02_Takeout`). Neither Nintendo's 3.0.x notes nor Nookipedia list any change at the Roost or to gyroids.
+
+The 7 texture files are the only loose `_Tex_` files in the whole port, and neither vanilla's nor the port's size table has an entry for them. A player's log (Retroid Pocket 5, Peanuts 0.1.8, QoL, this build and Shops Always Open) crashes as the Roost loads: `[RED] BufferInitialize: pool has no storage (pool 0x0 ...)`, then `CRASH sig=11 addr=0x4`, with the first game frame at `main+0x247c54`. The game sets up a GPU buffer with no memory pool behind it. The next test is the same island without the 9 Roost files. Not yet tried: nobody here has an island with the Roost.
+
+### Shops Always Open (GameBanana 724342)
+
+It is a 3.0.3 exefs patch plus hand-edited flows. Two of them are also in this port: `SNPC_slo_02_Commune` (Leif on Harv's Island) and `SNPC_fox_11_Commune_Lorrery` (Redd on Harv's Island). In Peanuts the first mod in the list wins the whole file. With Jubbsticks first, those two NPCs keep the port's features but lose their 24/7 hours. With Shops Always Open first, they keep the 24/7 hours but lose bamboo cultivation and the new raffle. Fixing that needs a merged flow.
+
 ## The patch file
 
 `jub-port-patch.json` (about 476 KB) holds no files from the port or the original mod:
