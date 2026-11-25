@@ -119,8 +119,18 @@
           <span class="pill">Pick the patch</span><span class="fname" id="patch-name">No file yet</span></label>
       </div>
     </li>
-    <li class="card step">
+    <li class="card step" id="step-others">
       <span class="num" aria-hidden="true">3</span>
+      <div>
+        <h2>Other ACNH mods you use (optional)</h2>
+        <p>Pick their .zip or .7z files, so the size table also covers the sizes they raised. Install this page's zip in Peanuts
+          <b>before</b> your other mods: Peanuts uses the first-installed mod's copy of a file and has no reorder, so reinstall the others after it.</p>
+        <label class="pick"><input class="sr" type="file" id="others" accept=".7z,.zip" multiple>
+          <span class="pill">Pick other mods</span><span class="fname" id="others-name">None</span></label>
+      </div>
+    </li>
+    <li class="card step">
+      <span class="num" aria-hidden="true">4</span>
       <div>
         <h2>Make the zip</h2>
         <button id="go" disabled>Make the Peanuts zip</button>
@@ -441,6 +451,45 @@ function yaz0Raw(d) {   // store-only Yaz0 (all literals)
   return out.subarray(0, o);
 }
 
+function yaz0Dec(b) {
+  if (hex(b.subarray(0, 4)) !== '59617a30') throw new Error('not a Yaz0 file');
+  const n = new DataView(b.buffer, b.byteOffset, b.byteLength).getUint32(4, false), out = new Uint8Array(n);
+  let i = 16, o = 0, code = 0, bits = 0;
+  while (o < n) {
+    if (!bits) { code = b[i++]; bits = 8; }
+    if (code & 0x80) out[o++] = b[i++];
+    else {
+      const b1 = b[i++], b2 = b[i++]; let len = b1 >> 4; const src = o - (((b1 & 15) << 8) | b2) - 1;
+      len = len ? len + 2 : b[i++] + 18;
+      for (let k = 0; k < len && o < n; k++) out[o + k] = out[src + k];
+      o += Math.min(len, n - o);
+    }
+    code = (code << 1) & 0xff; bits--;
+  }
+  return out;
+}
+// RSTC table: 'RSTC', u32 count, u32 version, count x (u32 crc, u32 size, u32 0) sorted by crc, then a tail
+function rstcParse(t) {
+  const v = new DataView(t.buffer, t.byteOffset, t.byteLength); if (hex(t.subarray(0, 4)) !== '52535443') throw new Error('not a size table');
+  const n = v.getUint32(4, true), ents = new Map();
+  for (let i = 0; i < n; i++) ents.set(v.getUint32(12 + 12 * i, true), [v.getUint32(16 + 12 * i, true), v.getUint32(20 + 12 * i, true)]);
+  return { ver: v.getUint32(8, true), ents, tail: t.subarray(12 + 12 * n) };
+}
+// Our table, with every size raised to the other mod's where that is larger, and its entries added
+function rstcMerge(ours, theirs) {
+  const A = rstcParse(ours), B = rstcParse(theirs); let raised = 0, added = 0;
+  if (A.ver !== B.ver) throw new Error('Its size table is version ' + B.ver + ', ours is ' + A.ver + '.');
+  for (const [k, e] of B.ents) {
+    const a = A.ents.get(k);
+    if (!a) { A.ents.set(k, e); added++; } else if (e[0] > a[0]) { a[0] = e[0]; raised++; }
+  }
+  const keys = [...A.ents.keys()].sort((x, y) => x - y), out = new Uint8Array(12 + 12 * keys.length + A.tail.length), v = new DataView(out.buffer);
+  out.set([0x52, 0x53, 0x54, 0x43]); v.setUint32(4, keys.length, true); v.setUint32(8, A.ver, true);
+  keys.forEach((k, i) => { const e = A.ents.get(k); v.setUint32(12 + 12 * i, k, true); v.setUint32(16 + 12 * i, e[0], true); v.setUint32(20 + 12 * i, e[1], true); });
+  out.set(A.tail, 12 + 12 * keys.length);
+  return { tab: out, raised, added };
+}
+
 // SARC
 function sarcParse(b) {
   const v = new DataView(b.buffer, b.byteOffset, b.byteLength); if (hex(b.subarray(0, 4)) !== '53415243') throw new Error('not a SARC');
@@ -546,7 +595,7 @@ function bymlWrite(root) {
   return out.slice(0, len);
 }
 
-async function build(modBytes, patch, zstd) {
+async function build(modBytes, patch, zstd, others = []) {   // others: [{ name, bytes }] other mods' zips
   if (patch.format !== 1 || patch.tid !== TID) throw new Error('That is not the jub-port-patch.json file.');
   const m = modBytes, is7z = m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C;
   if (!is7z && !(m[0] === 0x50 && m[1] === 0x4B)) throw new Error("That is not the port's download. Pick the Atmosphere .7z from the port's Releases.");
@@ -575,7 +624,18 @@ async function build(modBytes, patch, zstd) {
   done.set(S.file, zstdRaw(nsar));
   const R = patch.rstb, tab = cat([utf8('RSTC'), u32(R.count), await inflateRaw(unb64(R.data))]);
   if (await sha256(tab) !== R.content_sha256) throw new Error('The size table came out wrong. Please open an issue.');
-  done.set('System/Resource/ResourceSizeTable.srsizetable', yaz0Raw(tab));
+  // Peanuts takes a file from the first-installed mod, so this table must also allow every size the other mods raised
+  const RS = 'System/Resource/ResourceSizeTable.srsizetable', merged = [];
+  let mt = tab;
+  for (const o of others) {
+    const ob = o.bytes, o7 = ob[0] === 0x37 && ob[1] === 0x7A, of = o7 ? await read7z(ob) : await readZip(ob);
+    const k = [...of.keys()].find(n => n.endsWith(RS));
+    if (!k) { merged.push(o.name + ': no size table, skipped'); continue; }
+    let t; try { t = yaz0Dec(await of.get(k)()); } catch (e) { throw new Error(o.name + ': ' + e.message); }
+    let r; try { r = rstcMerge(mt, t); } catch (e) { throw new Error(o.name + ': ' + e.message); }
+    mt = r.tab; merged.push(`raised ${r.raised}, added ${r.added} from ${o.name}`);
+  }
+  done.set(RS, yaz0Raw(mt));
   // Device-tested on ACNH 3.0.3: the port's 2.x-era EventFlow files hang the load, UnitIcon models crash it, other Message files are not 3.0.3's
   const BAD = /^(EventFlow\/|Model\/UnitIcon|Message\/(?!String_USen))/;
   const EF = patch.eventflow, okFlow = new Set((EF ? EF.flows : []).map(f => 'EventFlow/' + f + '.bfevfl'));
@@ -592,7 +652,7 @@ async function build(modBytes, patch, zstd) {
     entries.push([out + r, await files.get(name)()]);
   }
   for (const [r, d] of done) entries.push([out + r, d]);
-  return { zip: writeZip(entries), romfs: entries.length };
+  return { zip: writeZip(entries), romfs: entries.length, merged };
 }
 
 if (typeof document !== 'undefined') {
@@ -600,20 +660,23 @@ if (typeof document !== 'undefined') {
   const ready = () => { $('go').disabled = !($('mod').files.length && $('patch').files.length); };
   const picked = id => { const f = $(id).files[0]; $(id + '-name').textContent = f ? f.name : 'No file yet'; $('step-' + id).classList.toggle('done', !!f); ready(); };
   $('mod').onchange = () => picked('mod'); $('patch').onchange = () => picked('patch');
+  $('others').onchange = () => { const f = [...$('others').files]; $('others-name').textContent = f.length ? f.map(x => x.name).join(', ') : 'None'; $('step-others').classList.toggle('done', !!f.length); };
   $('go').onclick = async () => {
     $('go').disabled = true; status('Working…');
     try {
       let patch;
       try { patch = JSON.parse(await $('patch').files[0].text()); } catch { throw new Error('That is not the jub-port-patch.json file.'); }
-      const r = await build(new Uint8Array(await $('mod').files[0].arrayBuffer()), patch, d => fzstd.decompress(d));
+      const others = [];
+      for (const f of $('others').files) others.push({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
+      const r = await build(new Uint8Array(await $('mod').files[0].arrayBuffer()), patch, d => fzstd.decompress(d), others);
       const a = document.createElement('a');
       a.href = URL.createObjectURL(r.zip); a.download = 'jubbsticks-additions-peanuts.zip'; document.body.append(a); a.click(); a.remove();
-      status(`Done: jubbsticks-additions-peanuts.zip (${(r.zip.size / 1048576).toFixed(1)} MB, ${r.romfs} files). Install it in Peanuts.`, 'ok');
+      status(`Done: jubbsticks-additions-peanuts.zip (${(r.zip.size / 1048576).toFixed(1)} MB, ${r.romfs} files)${r.merged.length ? '. Size table: ' + r.merged.join('; ') : ''}. Install it in Peanuts.`, 'ok');
     } catch (e) { status(e.message, 'err'); }
     ready();
   };
 }
-if (typeof module !== 'undefined') module.exports = { build };
+if (typeof module !== 'undefined') module.exports = { build, yaz0Dec, rstcParse, rstcMerge, readZip, read7z, yaz0Raw, inflateRaw, unb64, cat, utf8, u32 };
 </script>
 </body>
 </html>

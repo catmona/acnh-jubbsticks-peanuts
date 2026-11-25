@@ -20,8 +20,18 @@
           <span class="pill">Pick the patch</span><span class="fname" id="patch-name">No file yet</span></label>
       </div>
     </li>
-    <li class="card step">
+    <li class="card step" id="step-others">
       <span class="num" aria-hidden="true">3</span>
+      <div>
+        <h2>Other ACNH mods you use (optional)</h2>
+        <p>Pick their .zip or .7z files, so the size table also covers the sizes they raised. Install this page's zip in Peanuts
+          <b>before</b> your other mods: Peanuts uses the first-installed mod's copy of a file and has no reorder, so reinstall the others after it.</p>
+        <label class="pick"><input class="sr" type="file" id="others" accept=".7z,.zip" multiple>
+          <span class="pill">Pick other mods</span><span class="fname" id="others-name">None</span></label>
+      </div>
+    </li>
+    <li class="card step">
+      <span class="num" aria-hidden="true">4</span>
       <div>
         <h2>Make the zip</h2>
         <button id="go" disabled>Make the Peanuts zip</button>
