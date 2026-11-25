@@ -53,3 +53,7 @@ You need Python 3.12 with `zstandard`, the port's V0.0.2 release extracted, and 
 Jubbsticks for the actual mod (go give it a like on [GameBanana](https://gamebanana.com/mods/579817)), dragonloverlord for the 3.0.3 port, and the Peanuts Native devs. The page bundles [fzstd](https://github.com/101arrowz/fzstd) (MIT).
 
 Fan-made, not affiliated with Nintendo, Jubbsticks or dragonloverlord.
+
+## License
+
+The page and tools are GPL-2.0, same as [QoL for Peanuts](https://github.com/catmona/acnh-qol-peanuts). Jubbsticks' and the port's files aren't part of this repo, and the bundled fzstd keeps its MIT license.
