@@ -2,68 +2,54 @@
 
 ![banner](docs/img/banner.png)
 
-A helper that turns dragonloverlord's [Unofficial Jubbsticks Additions Port](https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port) (UJAP-V0.0.2, ACNH 3.0.3) into a mod zip for Peanuts Native on Android.
+[Jubbsticks' Additions](https://gamebanana.com/mods/579817), through dragonloverlord's [3.0.3 port](https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port), running on Peanuts Native on Android. The port crashes on Peanuts as is. The [patcher page](https://catmona.github.io/acnh-jubbsticks-peanuts/) fixes up your own download right in your browser, and can make [QoL Enhancements](https://github.com/catmona/acnh-qol-peanuts) at the same time.
 
-The port's normal download doesn't run on Peanuts as is: some of its files are from the 2.x game and crash or hang 3.0.3 there. This repo has a [patcher page](https://catmona.github.io/acnh-jubbsticks-peanuts/) that fixes that up right in your browser. You give it the port's own download, and nothing gets uploaded.
-
-> [!IMPORTANT]
-> This is an **unofficial beta** of an unofficial port. Please don't ask Jubbsticks or dragonloverlord for help with this zip. If something breaks on Peanuts, open an issue here.
+> [!NOTE]
+> **How this was made:** Claude (Anthropic's AI, through Claude Code) found why the port crashes, and wrote the patcher page, the build tools and the docs. I decided what to build and tested every build on my AYN Thor, but I haven't reviewed the code line by line, so assume any part of it may be AI-written.
 
 ## Features
 
-The mod is Jubbsticks' work, and the port to 3.0.x is dragonloverlord's. I only got it running on Peanuts.
+All of this is Jubbsticks' and dragonloverlord's work, I just got it running on Peanuts. If something doesn't work, please open an issue here, not on their pages!
 
-<img src="docs/img/features/new-stuff.png" alt="Jubbsticks' Additions: new items, new NPCs and new interactions, lots to discover and unlock, English only for now" width="100%">
-<img src="docs/img/features/stacks.png" alt="Stacks to 254: fish, bugs, dive fish, clams and trash all stack, every stack limit goes up to 254, done with romfs edits only (dragonloverlord's addition)" width="100%">
-<img src="docs/img/features/port.png" alt="From the port: all tools are unbreakable, the new tool and balloon DIYs stay out of hotel delivery requests" width="100%">
-<img src="docs/img/features/not-yet.png" alt="Not working on Peanuts yet: item icons for the new fruit and gems; their UnitIcon models crash ACNH 3.0.3 on Peanuts 0.1.8, so the patcher leaves them out until that's fixed" width="100%">
+<img src="docs/img/features/new-stuff.png" alt="New Stuff: new items, new NPCs and new things to do, lots to discover and unlock, English only for now" width="100%">
+<img src="docs/img/features/stacks.png" alt="Stacking: fish, bugs, dive fish, clams and trash stack in your pockets, stacks go up to 254" width="100%">
+<img src="docs/img/features/tools.png" alt="Tools and DIY: tools never break, craft bait in bulk, hotel requests skip the new gem-heavy DIYs" width="100%">
+<img src="docs/img/features/icons.png" alt="New Icons: the new fruit and gems get their own pocket icons, needs the memory fix, which the patcher adds for you" width="100%">
 
 ## Install
 
-1. Read the rules in the [port's README](https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port), then get `UJAP-BetaRelease-V002-Atmosphere.7z` from its [Releases](https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port/releases). Don't extract it.
-2. Get `jub-port-patch.json` from the [latest release](https://github.com/catmona/acnh-jubbsticks-peanuts/releases/latest) here.
-3. Open the [patcher page](https://catmona.github.io/acnh-jubbsticks-peanuts/), pick both files and hit **Make the Peanuts zip**.
-4. Back up your save. In Peanuts, long-press ACNH to open its settings, then go to **Install mod… > Zip file** and pick `jubbsticks-additions-peanuts.zip`.
-5. Peanuts rebuilds the game with the mod (about 5 minutes for me). Then start a new game.
+1. Get `UJAP-BetaRelease-V002-Atmosphere.7z` from the [port's Releases](https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port/releases) (read the rules in its README first). Don't extract it.
+   Want QoL Enhancements too? Also get **Main download (Modded Switch)** from its [GameBanana page](https://gamebanana.com/mods/727637).
+2. Open the [patcher page](https://catmona.github.io/acnh-jubbsticks-peanuts/), pick your download(s) and hit **Make my Peanuts zips**.
+3. Back up your save. In Peanuts, long-press ACNH, then go to **Mods & Cheats > Add > A file** and add each zip in the order the page lists them.
+4. Peanuts rebuilds the game with the mods. That took about 5 minutes for me. Then hit Play.
 
-Using other mods too? Install this one **first**, before any other ACNH mod. Peanuts gives each file to the first mod in the list that has it, and the first mod's size table limits every file. Pick your other mods' zips in the patcher's optional step 3, so the size table it makes covers their files too.
+One of the zips is a small memory fix. The new icons need it, so leave it ticked.
 
-Other mods that replace the same item tables or the same two NPC flows (`SNPC_fox_11_Commune_Lorrery`, `SNPC_slo_02_Commune`) lose those files to this one.
+Using other mods too, like ACNH Combined? Add their zips in the page's "Using other mods too?" box, and install them after these.
 
-Offline play only, with your own copy of the game.
+![Jubbsticks' Additions, QoL, ACNH Combined and the memory fix in Peanuts' mod list](docs/img/peanuts-mods.jpg)
 
-## Status
+<sub>My setup. QoL and ACNH Combined are optional.</sub>
 
-This is early. Here's where it stands:
+## Troubleshooting
 
-- The patch only fits port version `UJAP-V0.0.2`. dragonloverlord is still fixing item IDs in the port, so new versions will keep coming. The page refuses a newer download until I make a patch for it.
-- This V0.0.2 build loads my island on my AYN Thor (Peanuts Native 0.1.8), together with QoL and ACNH Combined 3.0.3 (QoL first, then this mod, then Combined). It comes out byte for byte the same from the page as from my PC build.
-- The EventFlow files (NPC dialogue flows) are in: the patch adds the port's 40 new flows and merges its flow list into the 3.0.3 one. I haven't checked yet that a new NPC flow plays: my test island is still at the tent stage, and the player can't cross its rivers yet.
-- I haven't played far enough yet to check the new items in game.
-- The item icons of the new fruit and gems are left out for now (see the card above and [PORT.md](docs/PORT.md)).
-- With Peanuts' frame rate cap at 60 fps, the island load crashed on my Thor. With the cap at "Game owned", it loads. I'm looking into the 60 fps crash.
+I run it on my AYN Thor with Peanuts Native 0.1.8, together with QoL and ACNH Combined.
 
-## About the AI part
+With QoL too, set **Graphics > Frame rate cap** to **Game owned** until Peanuts merges a one-line fix ([QoL's README](https://github.com/catmona/acnh-qol-peanuts#troubleshooting) has the details). With that fix, all four zips play at 60 fps. I haven't tried this mod at 60 fps without QoL.
 
-Heads up: most of this repo (the patcher page, the build tools and the docs) was written by Claude through Claude Code. I decided what to build, picked between the options it came up with and ran the device tests on my Thor. I haven't gone through the code line by line. [PORT.md](docs/PORT.md) lists the checks that were run. Commits don't have a Claude co-author line, so assume any of it could be AI-written.
-
-None of this gets sent to the port: please don't open issues or pull requests on the port's repo about this zip.
+If the page says your download doesn't match, you need exactly `UJAP-BetaRelease-V002-Atmosphere.7z`.
 
 ## How it works
 
-The patch file has no files from the port or the original mod in it. It holds:
-
-- the vanilla 3.0.3 message labels the port's `Message/` files lack: 79 item names in each `String` file and one line in each `TalkSNpc` file
-- a resource size table: vanilla 3.0.3 plus the port's files
-
-The page checks each message file it changes by SHA-256 before and after, so it only works on the exact V0.0.2 download. The port's item tables go in as they are, and its 25 UnitIcon models stay out. Details are in [PORT.md](docs/PORT.md).
+A few of the port's files come from an older version of the game and crash 3.0.3 on Peanuts. The page fixes those in your own download, so none of Jubbsticks' or the port's files are re-hosted here. Details are in [PORT.md](docs/PORT.md).
 
 ## Building it yourself
 
-You need Python 3.12 with `zstandard`, the port's V0.0.2 release extracted, and the 3.0.3 romfs files from your own copy of ACNH. `tools/build_jub.py` makes the merged romfs, `tools/build_rstb.py` the size table and `tools/build_patch.py` the patch file. Each script has its usage at the top. `node test/run.mjs <port .7z> <patch.json> <out.zip>` runs the page's code outside the browser.
+You need Python 3.12 with `zstandard`, the port's V0.0.2 release extracted, and the 3.0.3 romfs from your own copy of ACNH. The scripts in `tools/` have their usage at the top.
 
 ## Credits
 
-Jubbsticks for the actual mod (go give it a like on [GameBanana](https://gamebanana.com/mods/579817)), dragonloverlord for the 3.0.x port and the stacking feature, and the Peanuts Native devs. The page bundles [fzstd](https://github.com/101arrowz/fzstd) (MIT).
+Jubbsticks for the actual mod (go give it a like on [GameBanana](https://gamebanana.com/mods/579817)), dragonloverlord for the 3.0.3 port, and the Peanuts Native devs. The page bundles [fzstd](https://github.com/101arrowz/fzstd) (MIT).
 
 Fan-made, not affiliated with Nintendo, Jubbsticks or dragonloverlord.
