@@ -101,6 +101,12 @@
 
   <div id="flow"></div>
 
+  <section class="card then" id="jub-opts" hidden>
+    <h2>Optional fixes</h2>
+    <p>Fixes you can leave out. The ones that are ticked go in when you make the zip.</p>
+    <div class="opts"></div>
+  </section>
+
   <section class="card then">
     <h2><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M30 6C13 16 7 37 18 55c20 2 36-14 36-34C48 11 40 7 30 6z" fill="#6dbb4f"/>
       <path d="M18 55C24 40 31 28 44 16" fill="none" stroke="#4b9435" stroke-width="4" stroke-linecap="round"/></svg>What you get</h2>
@@ -624,6 +630,238 @@ async function build(modBytes, patch, zstd, others = [], fix = true) {   // othe
   return { zip: writeZip(entries), romfs: entries.length, merged, icons: (patch.with_fix || []).length - needFix.size };
 }
 
+// ---- Patch format 2: fixes by meaning, each checked against the file it finds (tools/fix2.py is the Python twin and says more) ----
+const h16 = async u => (await sha256(u)).slice(0, 16);
+const eq = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+const hashg = (nm, g) => { let h = 0; for (const ch of utf8(nm)) h = (Math.imul(h, 0x492) + ch) >>> 0; return h % g; };
+class Msg {   // an msbt that takes label edits; rebuilt only when edited
+  constructor(b) {
+    const v = new DataView(b.buffer, b.byteOffset, b.byteLength), n = v.getUint16(0xE, true); let o = 0x20; this.b = b; this.secs = [];
+    for (let i = 0; i < n; i++) { const sz = v.getUint32(o + 4, true); this.secs.push([String.fromCharCode(...b.subarray(o, o + 4)), b.subarray(o + 16, o + 16 + sz)]); o = (o + 16 + sz + 15) & ~15; }
+    const sec = m => (this.secs.find(s => s[0] === m) || [])[1], L = sec('LBL1'), T = sec('TXT2'), A = sec('ATR1');
+    const lv = new DataView(L.buffer, L.byteOffset, L.byteLength), tv = new DataView(T.buffer, T.byteOffset, T.byteLength);
+    this.g = lv.getUint32(0, true); this.idx = new Map(); const lab = [];
+    for (let i = 0; i < this.g; i++) {
+      const c = lv.getUint32(4 + 8 * i, true); let p = lv.getUint32(8 + 8 * i, true);
+      for (let k = 0; k < c; k++) { const ln = L[p]; lab.push([new TextDecoder().decode(L.subarray(p + 1, p + 1 + ln)), lv.getUint32(p + 1 + ln, true)]); p += 5 + ln; }
+    }
+    this.idx = new Map(lab);
+    const cnt = tv.getUint32(0, true), offs = [...Array(cnt)].map((_, i) => tv.getUint32(4 + 4 * i, true)).concat([T.length]);
+    this.T = [...Array(cnt)].map((_, i) => T.subarray(offs[i], offs[i + 1]));
+    this.A = A ? A.slice() : null; this.es = A ? new DataView(A.buffer, A.byteOffset, A.byteLength).getUint32(4, true) : 0;
+    this.n0 = cnt; this.nw = []; this.dirty = false;
+  }
+  atr(i) { return !this.es ? new Uint8Array(0) : i < this.n0 ? this.A.subarray(8 + this.es * i, 8 + this.es * (i + 1)) : this.nw[i - this.n0]; }
+  get(l) { const i = this.idx.get(l); return i === undefined ? null : [this.T[i], this.atr(i)]; }
+  put(l, t, a) {
+    const i = this.idx.get(l);
+    if (i === undefined) {
+      a = a || new Uint8Array(0); if (a.length !== this.es) throw new Error('attribute size for ' + l);
+      if (a.length && this.A.length !== 8 + this.es * this.n0) throw new Error('ATR1 has a string pool; not handled');
+      this.idx.set(l, this.T.length); this.T.push(t); this.nw.push(a);
+    } else {
+      this.T[i] = t;
+      if (a && this.es) { if (i < this.n0) this.A.set(a, 8 + this.es * i); else this.nw[i - this.n0] = a; }
+    }
+    this.dirty = true;
+  }
+  build() {
+    const groups = [...Array(this.g)].map(() => []);
+    for (const [nm, i] of [...this.idx].sort((a, c) => a[1] - c[1])) groups[hashg(nm, this.g)].push([nm, i]);
+    const body = [], head = [u32(this.g)]; let off = 4 + 8 * this.g;
+    for (const gr of groups) {
+      head.push(u32(gr.length), u32(off));
+      for (const [nm, i] of gr) { const nb = utf8(nm), e = cat([new Uint8Array([nb.length]), nb, u32(i)]); body.push(e); off += e.length; }
+    }
+    const newL = cat([...head, ...body]); let to = 4 + 4 * this.T.length; const toffs = [];
+    for (const t of this.T) { toffs.push(to); to += t.length; }
+    const newT = cat([u32(this.T.length), ...toffs.map(u32), ...this.T]);
+    const out = [this.b.slice(0, 0x20)]; let len = 0x20;
+    for (const [m, d0] of this.secs) {
+      const d = m === 'LBL1' ? newL : m === 'TXT2' ? newT : m === 'ATR1' ? cat([u32(this.T.length), this.A.subarray(4), ...this.nw]) : d0;
+      const hdr = new Uint8Array(16); hdr.set(utf8(m)); new DataView(hdr.buffer).setUint32(4, d.length, true); out.push(hdr, d); len += 16 + d.length;
+      const pad = (16 - (len % 16)) % 16; if (pad) { out.push(new Uint8Array(pad).fill(0xab)); len += pad; }
+    }
+    const r = cat(out); new DataView(r.buffer).setUint32(0x12, r.length, true); return r;
+  }
+}
+class Tab {   // a bcsv: header, then fixed-size rows to the end of the file; the row count is the first u32
+  constructor(b) {
+    const v = new DataView(b.buffer, b.byteOffset, b.byteLength), n = v.getUint32(0, true), fc = v.getUint16(8, true);
+    this.b = b; this.el = v.getUint32(4, true); const hdr = String.fromCharCode(...b.subarray(0xC, 0x10)) === 'VSCB' ? 0x1C : 0x0C;
+    this.F = new Map(); for (let i = 0; i < fc; i++) this.F.set(v.getUint32(hdr + 8 * i, true).toString(16).padStart(8, '0'), v.getUint32(hdr + 8 * i + 4, true));
+    const offs = [...this.F.values()].sort((a, c) => a - c).concat([this.el]); this.size = new Map([...this.F].map(([c, o]) => [c, offs[offs.indexOf(o) + 1] - o]));
+    this.ds = hdr + 8 * fc; if (this.ds + this.el * n !== b.length) throw new Error('bcsv with a tail');
+    this.rows = [...Array(n)].map((_, r) => b.slice(this.ds + this.el * r, this.ds + this.el * (r + 1))); this.dirty = false;
+  }
+  key(r, c) { const o = this.F.get(c), z = Math.min(this.size.get(c), 4); let k = 0; for (let i = z - 1; i >= 0; i--) k = k * 256 + r[o + i]; return k; }
+  find(c, k) { const i = this.rows.findIndex(r => this.key(r, c) === k); return i < 0 ? null : i; }
+  field(i, c) { const o = this.F.get(c); return this.rows[i].subarray(o, o + this.size.get(c)); }
+  setf(i, c, v) { this.rows[i].set(v, this.F.get(c)); this.dirty = true; }
+  insert(c, k, row) {
+    const ks = this.rows.map(r => this.key(r, c)); let at = ks.length;
+    if (ks.every((x, i) => i === 0 || ks[i - 1] <= x)) { const j = ks.findIndex(x => x > k); at = j < 0 ? ks.length : j; }
+    this.rows.splice(at, 0, row.slice()); this.dirty = true;
+  }
+  build() { return cat([u32(this.rows.length), this.b.subarray(4, this.ds), ...this.rows]); }
+}
+function zsSize(b, zstd) {   // a zstd file's decompressed size: the frame header's content size when it has one
+  if (b[0] === 0x28 && b[1] === 0xB5 && b[2] === 0x2F && b[3] === 0xFD) {
+    const fhd = b[4], fcs = fhd >> 6, single = (fhd >> 5) & 1, did = [0, 1, 2, 4][fhd & 3], o = 5 + (single ? 0 : 1) + did, n = [single ? 1 : 0, 2, 4, 8][fcs];
+    if (n) { let v = 0; for (let i = n - 1; i >= 0; i--) v = v * 256 + b[o + i]; return v + (n === 2 ? 256 : 0); }
+  }
+  return zstd(b).length;
+}
+const decSize = (rel, b, zstd) => rel.endsWith('.zs') ? zsSize(b, zstd) : (b[0] === 0x59 && b[1] === 0x61 && b[2] === 0x7a && b[3] === 0x30) ? new DataView(b.buffer, b.byteOffset).getUint32(4, false) : b.length;
+function sizeTable(base, portTable, out, zstd) {   // build_rstb.py's rule over every file that goes out
+  const T = rstcParse(base), P = portTable ? rstcParse(portTable).ents : new Map(), up = n => Math.ceil(n / 32) * 32;
+  for (const rel of [...out.keys()].sort()) {
+    if (rel === RS2) continue;
+    const dec = decSize(rel, out.get(rel), zstd), k = crc32(utf8(rel.endsWith('.zs') ? rel.slice(0, -3) : rel)), e = T.ents.get(k);
+    if (e) { const old = e[0], model = rel.includes('.Nin_NX_NVN'); e[0] = (model && old - dec < 16384) ? Math.max(old, up(dec) + old) : model ? old : Math.max(old, up(dec) + 1024); }
+    else if (P.has(k)) T.ents.set(k, P.get(k).slice());
+  }
+  const keys = [...T.ents.keys()].sort((x, y) => x - y), o = new Uint8Array(12 + 12 * keys.length + T.tail.length), v = new DataView(o.buffer);
+  o.set([0x52, 0x53, 0x54, 0x43]); v.setUint32(4, keys.length, true); v.setUint32(8, T.ver, true);
+  keys.forEach((k, i) => { const e = T.ents.get(k); v.setUint32(12 + 12 * i, k, true); v.setUint32(16 + 12 * i, e[0], true); v.setUint32(20 + 12 * i, e[1], true); });
+  o.set(T.tail, 12 + 12 * keys.length); return o;
+}
+const RS2 = 'System/Resource/ResourceSizeTable.srsizetable';
+async function census(files) { const C = new Map(); for (const [r, b] of files) C.set(r, await h16(b)); return C; }
+function closest(patch, C) {   // the release these files are, or the closest one and how far off
+  let best = null;
+  for (const [name, R] of Object.entries(patch.releases)) {
+    const same = Object.entries(R).filter(([r, h]) => C.get(r) === h).length, s = [same, -Math.abs(C.size - Object.keys(R).length)];
+    if (!best || s[0] > best.s[0] || (s[0] === best.s[0] && s[1] > best.s[1])) best = { s, name, R };
+  }
+  const R = best.R, changed = Object.keys(R).filter(r => C.has(r) && C.get(r) !== R[r]).sort(), gone = Object.keys(R).filter(r => !C.has(r)).sort();
+  const nw = [...C.keys()].filter(r => !(r in R)).sort();
+  return { name: best.name, exact: !(changed.length || gone.length || nw.length), changed, gone, new: nw };
+}
+class State {
+  constructor(files, zstd) { this.files = files; this.zstd = zstd; this.S = new Map(); this.B = new Map(); this.Y = new Map(); this.drop = new Set(); this.repl = new Map(); }
+  has(r) { return this.files.has(r) && !this.drop.has(r); }
+  sarc(r) {
+    if (!this.S.has(r)) {
+      if (!this.has(r)) this.S.set(r, null);
+      else { const raw = this.zstd(this.files.get(r)), sp = sarcParse(raw), M = new Map(); this.S.set(r, { raw, ents: new Map(sp.ents.map(e => [e.name, e])), M }); }
+    }
+    return this.S.get(r);
+  }
+  msg(S, name) { if (!S.M.has(name)) { const e = S.ents.get(name); if (!e) return null; S.M.set(name, new Msg(e.data)); } return S.M.get(name); }
+  tab(r) { if (!this.B.has(r)) this.B.set(r, this.has(r) ? new Tab(this.files.get(r)) : null); return this.B.get(r); }
+  yml(r) { if (!this.Y.has(r)) this.Y.set(r, this.has(r) ? [bymlRead(this.files.get(r)), false] : null); return this.Y.get(r); }
+}
+const jeq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+async function checkOp(st, op) {   // [state, why, apply or null]
+  const k = op[0];
+  if (k === 'msg') {
+    const [, f, m, l, mode, pre, t0, a0] = op, S = st.sarc(f); if (!S) return ['gone', f];
+    const M = st.msg(S, m); if (!M) return ['gone', f + ':' + m];
+    const t = unb64(t0), a = a0 === null ? null : unb64(a0), cur = M.get(l);
+    if (mode === 'add') return cur ? ['ok', ''] : ['done', '', () => M.put(l, t, a)];
+    if (!cur) return ['gone', m + ':' + l];
+    if (eq(cur[0], t) && (a === null || eq(cur[1], a))) return ['ok', ''];
+    if (await h16(cat([cur[0], cur[1]])) !== pre) return ['diff', m + ':' + l];
+    return ['done', '', () => M.put(l, t, a)];
+  }
+  if (k === 'cell' || k === 'row') {
+    const f = op[1], T = st.tab(f); if (!T) return ['gone', f];
+    const kc = op[2], key = op[3]; if (!T.F.has(kc)) return ['diff', f + ' has no column ' + kc];
+    const i = T.find(kc, key);
+    if (k === 'row') {
+      const row = unb64(op[4]);
+      if (i !== null) return eq(T.rows[i], row) ? ['ok', ''] : ['diff', `${f} row ${key}`];
+      if (row.length !== T.el) return ['diff', f + ' row size'];
+      return ['done', '', () => T.insert(kc, key, row)];
+    }
+    const c = op[4], pre = unb64(op[5]), nw = unb64(op[6]);
+    if (i === null) return ['gone', `${f} row ${key}`];
+    if (!T.F.has(c) || T.size.get(c) !== nw.length) return ['diff', f + ' column ' + c];
+    const cur = T.field(i, c);
+    if (eq(cur, nw)) return ['ok', '']; if (!eq(cur, pre)) return ['diff', `${f} row ${key} ${c}`];
+    return ['done', '', () => T.setf(i, c, nw)];
+  }
+  if (k === 'byml') {
+    const [, f, path, pre, nw] = op, Y = st.yml(f); if (!Y) return ['gone', f];
+    let d = Y[0]; for (const p of path.slice(0, -1)) { d = d && typeof d === 'object' && !Array.isArray(d) ? d[p] : undefined; }
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return ['gone', f + ':' + path.join('/')];
+    const last = path[path.length - 1], cur = last in d ? d[last] : null;
+    if (jeq(cur, nw)) return ['ok', '']; if (!jeq(cur, pre)) return ['diff', f + ':' + path.join('/')];
+    return ['done', '', () => { d[last] = nw; Y[1] = true; }];
+  }
+  if (k === 'drop') return st.has(op[1]) ? ['done', '', () => st.drop.add(op[1])] : ['ok', ''];
+  if (k === 'delta') {
+    const [, f, pre, parts] = op; if (!st.has(f)) return ['gone', f];
+    const cur = st.repl.get(f) || st.files.get(f); if (await h16(cur) !== pre) return ['diff', f];
+    return ['done', '', () => st.repl.set(f, cat(parts.map(p => typeof p === 'string' ? unb64(p) : cur.subarray(p[0], p[0] + p[1]))))];
+  }
+  throw new Error('unknown op ' + k);
+}
+// files: Map romfs path -> bytes. on: Set of the optional fix ids to apply (null: their defaults). others: other mods' plain size tables.
+async function apply2(patch, files, zstd, on = null, memfix = true, others = []) {
+  const st = new State(files, zstd), rep = [];
+  for (const fx of patch.fixes) {
+    const want = (on === null || !fx.optional) ? fx.default !== false : on.has(fx.id);
+    if (!want) { rep.push({ id: fx.id, state: 'off' }); continue; }
+    const res = []; for (const op of fx.ops) res.push(await checkOp(st, op));
+    const bad = res.filter(r => r[0] === 'gone' || r[0] === 'diff'); let todo = res.filter(r => r[0] === 'done').map(r => r[2]), state;
+    if (bad.length && (!fx.partial || bad.length === res.length)) { state = 'skipped'; todo = []; } else state = bad.length ? 'partial' : todo.length ? 'applied' : 'already';
+    for (const a of todo) a();
+    rep.push({ id: fx.id, state, done: todo.length, ops: fx.ops.length, why: [...new Set(bad.map(b => b[1]))].sort().slice(0, 8), nbad: bad.length });
+  }
+  const gate = new Set(memfix ? [] : patch.with_fix || []), out = new Map();
+  for (const [r, b] of files) { if (st.drop.has(r) || gate.has(r) || r === RS2) continue; out.set(r, st.repl.get(r) || b); }
+  for (const [r, S] of st.S) {
+    if (!S || !out.has(r)) continue;
+    const repl = new Map([...S.M].filter(([, m]) => m.dirty).map(([n, m]) => [n, m.build()]));
+    if (repl.size) out.set(r, zstdRaw(sarcReplace(S.raw, repl)));
+  }
+  for (const [r, T] of st.B) if (T && T.dirty && out.has(r)) out.set(r, T.build());
+  for (const [r, Y] of st.Y) if (Y && Y[1] && out.has(r)) out.set(r, bymlWrite(Y[0]));
+  const R = patch.rstb, base = cat([utf8('RSTC'), u32(R.count), await inflateRaw(unb64(R.data))]);
+  if (await sha256(base) !== R.content_sha256) throw new Error('The size table came out wrong. Please open an issue.');
+  let tab = sizeTable(base, files.has(RS2) ? yaz0Dec(files.get(RS2)) : null, out, zstd);
+  const merged = [];
+  for (const o of others) { const r = rstcMerge(tab, o.table); tab = r.tab; merged.push(`raised ${r.raised}, added ${r.added} from ${o.name}`); }
+  out.set(RS2, tab);
+  return { out, rep, merged };
+}
+// The port's download (a 7z or zip) in, a Map from romfs path to bytes out
+async function portFiles(m) {
+  const is7z = m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C;
+  if (!is7z && !(m[0] === 0x50 && m[1] === 0x4B)) throw new Error("That is not the port's download. Pick the Atmosphere .7z from the port's Releases.");
+  const all = is7z ? await read7z(m) : await readZip(m);
+  const key = [...all.keys()].find(n => n.endsWith('romfs/Bcsv/ItemParam.bcsv'));
+  if (!key) throw new Error('No romfs/Bcsv/ItemParam.bcsv in that file. Pick the Atmosphere download of the port (not the Emulator one).');
+  const base = key.slice(0, -'Bcsv/ItemParam.bcsv'.length), files = new Map();
+  for (const name of [...all.keys()].filter(k => k.startsWith(base)).sort()) files.set(name.slice(base.length), await all.get(name)());
+  return files;
+}
+// Format 2 build: the port's download in, one zip out, plus what was found and what each fix did.
+async function build2(modBytes, patch, zstd, others = [], fix = true, on = null) {
+  const files = await portFiles(modBytes);
+  const rel = closest(patch, await census(files)), ot = [];
+  for (const o of others) {
+    const ob = o.bytes, of = ob[0] === 0x37 && ob[1] === 0x7A ? await read7z(ob) : await readZip(ob), k = [...of.keys()].find(n => n.endsWith(RS2));
+    if (!k) continue; let t; try { t = yaz0Dec(await of.get(k)()); } catch (e) { throw new Error(o.name + ': ' + e.message); }
+    ot.push({ name: o.name, table: t });
+  }
+  const r = await apply2(patch, files, zstd, on, fix, ot), out = `atmosphere/contents/${TID}/romfs/`, entries = [];
+  for (const [p, d] of [...r.out].sort((a, b) => a[0] < b[0] ? -1 : 1)) entries.push([out + p, p === RS2 ? yaz0Raw(d) : d]);
+  for (const o of others) if (!ot.find(x => x.name === o.name)) r.merged.push(o.name + ': no size table, skipped');
+  return { zip: writeZip(entries), romfs: entries.length, merged: r.merged, rep: r.rep, release: rel, icons: fix ? (patch.with_fix || []).length : 0 };
+}
+// One line per fix that didn't go in as made, for the page and the release check
+function report2(patch, r) {
+  const F = new Map(patch.fixes.map(f => [f.id, f])), lines = [];
+  for (const x of r.rep) {
+    if (x.state === 'skipped') lines.push(`Skipped: ${F.get(x.id).title} (${x.why.join(', ')}${x.why.length >= 8 ? ', ...' : ''} changed or gone in this release)`);
+    else if (x.state === 'partial') lines.push(`Partly applied: ${F.get(x.id).title} (${x.nbad} of ${x.ops} changes did not fit)`);
+  }
+  return lines;
+}
+
 // The memory fix: its own small mod, one IPS for ACNH 3.0.3's main (build ff1d1c05...). It makes the game's fixed
 // draw-array heap bigger and grows its parent heap by the same amount, out of memory the game leaves unused. Same bytes
 // as the standalone download in the QoL repo (tools/make_memfix.py there).
@@ -634,6 +872,13 @@ const memFixZip = () => writeZip([[`atmosphere/exefs_patches/${MEMFIX.set}/${MEM
 // Cheap check used when a file is picked: is this the port's download that the patch fits? Throws a friendly message if not.
 // A .7z is taken on trust (unpacking it takes seconds; build() checks every file again). A zip is checked by its ItemParam.
 async function check(modBytes, patch) {
+  if (patch.format === 2 && patch.tid === TID) {
+    const R = closest(patch, await census(await portFiles(modBytes))), v = R.name.replace(/^UJAP-/, '');
+    optBoxes(patch);
+    if (R.exact) return `Jubbsticks' Additions port ${v}`;
+    return `Jubbsticks' Additions port, not a release I know: closest is ${v} (${R.changed.length} files changed, ${R.new.length} new, ${R.gone.length} gone). `
+      + 'The fixes that still fit go in; the rest are listed when you make the zip.';
+  }
   if (patch.format !== 1 || patch.tid !== TID) throw new Error('That is not the jub-port-patch.json file.');
   const m = modBytes;
   if (m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C) return `Jubbsticks' Additions port ${patch.release.replace(/^UJAP-/, '')}`;
@@ -646,13 +891,36 @@ async function check(modBytes, patch) {
   return `Jubbsticks' Additions port ${patch.release.replace(/^UJAP-/, '')}`;
 }
 
-// What the page calls: one zip out (fzstd is the global the page loads before this file).
-async function make(modBytes, patch, o = {}) {
-  const fix = o.fix !== false, r = await build(modBytes, patch, d => fzstd.decompress(d), o.others || [], fix);
-  return { zip: r.zip, note: `${r.romfs} files` + (r.merged.length ? '. Size table: ' + r.merged.join('; ') : '') + (fix ? '' : '. The new fruit and gems have no icons without the memory fix') };
+// The optional fixes as checkboxes, on the Jubbsticks page only (#jub-opts; the QoL page loads this engine too and has no such box).
+// Every fix marked optional in the patch gets one, so a new optional fix needs no page edit.
+const escH = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+function optBoxes(patch) {
+  const box = typeof document !== 'undefined' && document.getElementById('jub-opts'); if (!box) return;
+  const opt = patch.fixes.filter(f => f.optional); if (!opt.length) return;
+  box.querySelector('.opts').innerHTML = opt.map(f => `<label class="fixopt"><input type="checkbox" data-fix="${escH(f.id)}"${f.default !== false ? ' checked' : ''}>
+    <span>${escH(f.title)}</span></label>`).join('');
+  box.hidden = false;
+}
+// The checked optional fixes, or null when the page has no boxes (then each fix's default applies)
+function optOn() {
+  const b = typeof document !== 'undefined' ? [...document.querySelectorAll('#jub-opts [data-fix]')] : [];
+  return b.length ? new Set(b.filter(x => x.checked).map(x => x.dataset.fix)) : null;
 }
 
-if (typeof module !== 'undefined') module.exports = { build, check, make, writeZip, MEMFIX, memFixZip, yaz0Dec, rstcParse, rstcMerge, readZip, read7z, yaz0Raw, inflateRaw, unb64, cat, utf8, u32 };
+// What the page calls: one zip out (fzstd is the global the page loads before this file).
+async function make(modBytes, patch, o = {}) {
+  const fix = o.fix !== false, zstd = d => fzstd.decompress(d);
+  const tail = r => (r.merged.length ? '. Size table: ' + r.merged.join('; ') : '') + (fix ? '' : '. The new fruit and gems have no icons without the memory fix');
+  if (patch.format === 2) {
+    const r = await build2(modBytes, patch, zstd, o.others || [], fix, o.on || optOn()), lines = report2(patch, r);
+    return { zip: r.zip, note: `${r.romfs} files from port ${r.release.name.replace(/^UJAP-/, '')}` + (r.release.exact ? '' : ' (closest release)')
+      + '. ' + (lines.length ? lines.join('. ') : 'Every fix went in') + tail(r) };
+  }
+  const r = await build(modBytes, patch, zstd, o.others || [], fix);
+  return { zip: r.zip, note: `${r.romfs} files` + tail(r) };
+}
+
+if (typeof module !== 'undefined') module.exports = { build, build2, portFiles, optBoxes, optOn, apply2, report2, closest, census, check, make, writeZip, MEMFIX, memFixZip, yaz0Dec, rstcParse, rstcMerge, readZip, read7z, yaz0Raw, inflateRaw, unb64, cat, utf8, u32 };
 
 globalThis.JUB = { make, check, build, MEMFIX, memFixZip, writeZip };
 })();

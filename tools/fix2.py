@@ -235,7 +235,7 @@ def apply(patch,files,on=None,memfix=True,others=()):
         if not want: rep.append({'id':fx['id'],'state':'off'}); continue
         res=[check(st,op) for op in fx['ops']]
         bad=[(s,w) for s,w,_ in res if s in ('gone','diff')]; todo=[a for s,_,a in res if s=='done']
-        if bad and not fx.get('partial'): state='skipped'; todo=[]
+        if bad and (not fx.get('partial') or len(bad)==len(res)): state='skipped'; todo=[]
         else: state='partial' if bad else ('applied' if todo else 'already')
         for a in todo: a()
         rep.append({'id':fx['id'],'state':state,'done':len(todo),'ops':len(fx['ops']),'why':sorted({w for _,w in bad})[:8],'nbad':len(bad)})

@@ -10,10 +10,17 @@ The output is the port's own romfs with these changes:
 | --- | --- |
 | The port's 25 `Model/UnitIcon*` models go in only with the memory fix | without it they crash 3.0.3 at the title (see below) |
 | `EventFlow/`: the 40 new flows go in, and `EventFlowInfoProduct.byml` is the 3.0.3 file plus the port's new entries | the port's own byml is 2.x-era (see EventFlow below) |
-| Each `Message/` sarc gets back the vanilla 3.0.3 labels it lacks: 79 item names in `String_USen` and `String_EUen`, one Leif line (`slo/SP_slo.msbt` label `400`) in `TalkSNpc_USen` and `TalkSNpc_EUen` | the port's copies are 2.x-era and lack those labels (9 tools, 70 other items). There is no vanilla EUen file, so the EUen sarcs get the USen text |
+| `Message/` sarcs: the vanilla 3.0.3 labels the port lacks (79 item names in `String_USen` and `String_EUen`, Leif's `SP_slo:400`), each from 3.0.3's file in the same language | the port's copies are 2.x-era |
+| `Message/` sarcs: the labels the port's message tool broke, in 12 sarcs | it wrote 143 labels with no end mark or cut off mid-tag. That is the missing space before item names (`STR_Article` "a " had no end mark, so the game ran on into the next label). With the lost labels below, it is also behind the blank dialogue boxes. The build has 0 |
+| `Message/` sarcs: 1.0.11 labels the port lost, in 12 sarcs (1,501 labels) | among them K.K.'s `SP_tkk_dream` 300 and 333 (his lines at launch) and the Roost board's text |
+| Recipes 1226 and 1227 make items 881 and 886 (the woodland arch and shrub) | the port moved the two items but not the recipes, which made souvenir bags (see Item tables) |
+| Names for 9 unnamed items in USen and EUen, and 3.0.3's "Nook Inc. balloon" for `Balloon_14540` | the woodland pieces, the petaltail dragonfly piece 1028, and six fish and insect models (see Item tables) |
+| `Bcsv/FgMainParam.bcsv` gets back 21 of 1.0.11's field-object rows | the port's pansy, tulip, hyacinth, anemone, lily and cosmos colours had nothing to plant |
+| Optional, on by default: `EventFlow/Ftr_Working.bfevfl` is left out, so the game uses its own 3.0.3 workbench, and the 4 `FTR_WorkingTable` labels get 3.0.3's text | the port's workbench is 1.0.11's, without 3.0's multi-craft or crafting from storage. Unticked, the port's bulk bait crafting stays |
+| Optional, off by default: the Roost's 9 files are left out | for the Roost crash below |
 | `System/Resource/ResourceSizeTable.srsizetable` is rebuilt | vanilla 3.0.3's table, plus the port's entries for its new files, with sizes raised where a port file is bigger |
 
-The item tables (`Bcsv/*`), stages, params, layouts and the other models go in exactly as the port ships them, including its 254 stack limit.
+Apart from those rows, the item tables (`Bcsv/*`), stages, params, layouts and the other models go in exactly as the port ships them, including its 254 stack limit.
 
 ## What is left out, and why
 
@@ -88,10 +95,12 @@ The table lists the strings in vanilla 3.0.3 that the port's copy lacks:
 | `Player_GetDemo`, `Player_GetDemo_Recipe_DIY` | `cCloudIslandAll` | the clam count, the sturdy tool recipes |
 | `SNPC_hgc_01_NowQuest` | the hotel mannequin rental, `SP_hgc:181`-`182` | one achievement flag |
 | `NNPC_Talk_General` (villager small talk) | 20 strings, among them `IsMidNight`, `ForMileTicketSupport_Chk`, `ContinuousTalkCount` | nothing visible |
-| `Tutorials_Prologue_Tkk` (new game) | `AoC`, `BundledEdition`, `VersionUp`, and 21 more strings | a Tom Nook dream |
+| `Tutorials_Prologue_Tkk` (new game) | `AoC`, `BundledEdition`, `VersionUp`, and 21 more strings | K.K.'s dream at launch (`Tkk30Dream`) |
 | `Obj_RcoMachine_MileExchange`, `SNPC_doc_52_CommuneIsland` | 8 and 12 events | Nook Miles rewards, the Mole flag |
 
-`Tutorials_Prologue_Tkk`: 1.0.0's file has none of `AoC`, `BundledEdition` or `VersionUp`. 1.0.11's file has 18 strings that 1.0.0's lacks. So Jubbsticks started from a file newer than 1.0.0, and these three came with a later update: they aren't a pre-2.0 leftover. Without a 2.0 dump we can't tell whether Jubbsticks cut them or their base file never had them. Their own change (the dream) doesn't touch that part of the file.
+`Tutorials_Prologue_Tkk`: 1.0.0's file has none of `AoC`, `BundledEdition` or `VersionUp`. 1.0.11's file has 18 strings that 1.0.0's lacks. So Jubbsticks started from a file newer than 1.0.0, and these three came with a later update: they aren't a pre-2.0 leftover. Without a 2.0 dump we can't tell whether Jubbsticks cut them or their base file never had them. Their own change (K.K.'s dream) doesn't touch that part of the file. K.K. said nothing at launch in the port because his dream's lines, `SP_tkk_dream` 300 and 333, were among the labels the port lost. The build puts them back.
+
+The build replaces only `Ftr_Working` (optional, by leaving the port's file out). The other flows still need a merge of 3.0.3's logic with Jubbsticks' change, which is left for later.
 
 This compares strings, not flow logic. A missing string shows that the port's file is older than 3.0.3, but how much each loss matters in play still needs checking in game.
 
@@ -114,16 +123,16 @@ Every vanilla 3.0.3 row id is still there, and every row 3.0 added is kept. In e
   - All 97 recipes the port adds have 9800 in that field.
   - That may be the hotel-delivery exclusion the README describes. We haven't confirmed which field controls hotel requests.
 
-What the port lost or broke on the way:
+What the port lost or broke on the way. The Peanuts build fixes each one marked "fixed", checked against the data but not yet in game:
 
-- **Recipes 1226 and 1227 make the wrong items.** Not checked in game.
+- **Recipes 1226 and 1227 make the wrong items.** Fixed: they make 881 and 886 again.
   - In 1.0.11 they made the woodland arch and the woodland shrub (items 883 and 884).
   - 3.0 uses 883 and 884 for the apple and orange souvenir bags. The port moved the two furniture items to 881 and 886, but the recipes still point at 883 and 884, so crafting them should give a souvenir bag.
   - Items 881 and 886 have no recipe and no name.
   - The port still ships the names `Ftr_00883` "woodland arch" and `Ftr_00884` "woodland shrub", which nothing uses.
-- **The green leaf balloon is gone.** 1.0.11's `ToolBalloonLeafGreen` was item 14540, which is 3.0's Nook Inc. balloon. The port kept 3.0's item but not its name: `Balloon_14540` reads "green leaf balloon" in USen and EUen.
-- **The petaltail dragonfly furniture** moved from 1030 and 1031 (now villager photos) to 1028 and 1034, with no names.
-- **Pansies: 20 items lost their field objects.** Not checked in game.
+- **The green leaf balloon is gone.** 1.0.11's `ToolBalloonLeafGreen` was item 14540, which is 3.0's Nook Inc. balloon. The port kept 3.0's item but not its name: `Balloon_14540` reads "green leaf balloon" in USen and EUen. Fixed: it reads 3.0.3's "Nook Inc. balloon". The leaf balloon itself stays gone, since 3.0 owns its id.
+- **The petaltail dragonfly furniture** moved from 1030 and 1031 (now villager photos) to 1028 and 1034, with no names. Fixed: 1028 gets 1.0.11's name, and 1034, a model, gets a model name (see below).
+- **Pansies: 20 items lost their field objects.** Fixed: the build adds back 1.0.11's 21 rows (the keys neither the port nor 3.0.3 uses), with the same layout as the port's table.
   - `FgMainParam` drops 1.0.11's 21 rows 59977-59999.
   - The planted pansies (`PltPansyRed1`-`3`, `Blue1`-`3`, `Pink1`-`3`, `Coral1`-`3`) are still in `ItemParam`, with nothing to place.
   - So are the flowers `FlwPansyCoral`, `FlwPansyPink`, `FlwPansyRedHybrid`, `FlwPansyBlueHybrid` and `FlwPansyCoralHybrid`.
@@ -134,8 +143,8 @@ What the port lost or broke on the way:
   - the petal pieces (1028, 1034) and the woodland pieces (881, 886)
   - `ToolRadarSzo` (2001) and the Roost board (11111)
 
-  1.0.11 had names for 6 of the critters: barbel steed, eel, black widow, house centipede, luna moth, petaltail dragonfly.
-- Item 1935 (perfect-apple fritter) points at a menu icon row that doesn't exist.
+  1.0.11 had names for 6 of the critters: barbel steed, eel, black widow, house centipede, luna moth, petaltail dragonfly. The first five are fish and insects whose names the port has; the unnamed ids are their models (`Kind_FishToy`, `Kind_InsectToy`). Fixed: 881 and 886 take the port's unused "woodland arch" and "woodland shrub", and the six models get the critter's name plus " model", as vanilla names its models. Still unnamed: the white modern bed (1000, no text anywhere to take it from), and `ToolRadarSzo` (2001) and the Roost board (11111), which the player never holds.
+- Item 1935 (perfect-apple fritter): its icon columns are fine, but the port ships no `Layout_FtrIcon_` or `Layout_CookingIcon_` model for it, and neither did 1.0.11. It needs new art, so it is left.
 - No recipe points at an item that doesn't exist. This checked each recipe's result and its 4 material fields.
 
 ### Messages
@@ -147,6 +156,7 @@ In these labels the port has 1.0.11's text instead of 3.0.3's:
 - `TalkFtr` `FTR_WorkingTable:023`, `024`, `024_a`, `024_b`:
   - 3.0 reuses these labels for the Pocket Camp and Paradise Planning phone cases ("Customize it!" / "Not right now.").
   - The port has Jubbsticks' bait lines instead ("I made a bunch of fish bait!", "Craft more!" / "All done for now.").
+  - The optional 3.0.3 workbench fix sets them back to 3.0.3's, with the flow.
 - `pge/SP_pge_02_Takeout`: about 19 lines of Brewster's coffee to go, reworded in 3.0. Matches the port's 2.0 flow.
 - `SP_slo_02_Commune:098`, and Leif's mail `SNpc_slo:201` (3.0 changed its sign-off).
 - `String_EUen` has US names in the EU English file: Spork for Crackle, Jacob for Jakey, pachy, sparkling cider, aloha edition. Cosmetic.
@@ -190,7 +200,7 @@ This table shows which size table has an entry for each port file:
 
 ### The port's README and FileInfo
 
-- **Bait bulk crafting.** The README says "I did attempt to port the changes over". But `Ftr_Working` is 1.0.11's file, byte for byte, so 3.0's multi-craft and crafting from storage are gone at the workbench.
+- **Bait bulk crafting.** The README says "I did attempt to port the changes over". But `Ftr_Working` is 1.0.11's file, byte for byte, so 3.0's multi-craft and crafting from storage are gone at the workbench. The build's optional workbench fix brings 3.0.3's back.
 - **Hotel DIY deliveries.** The README says the mod's recipes were "manually flagged". See `RecipeCraftParam` above: plausible, not confirmed.
 - **The "Removed" list** names only the 2 bananas and the translations. It leaves out the green leaf balloon, the pansy field objects, the woodland arch and shrub recipes, and the critter names.
 - **`FileInfo.md`** names `SNPC_rcm_11_BuyDIYBook`, but the file is `SNPC_rcm_11_BuyDIYbook.bfevfl`. It lists only 2 of the 31 replaced flows as conflicts.
@@ -235,20 +245,43 @@ Fixing that needs a merged flow.
 
 ## The patch file
 
-`jub-port-patch.json` (about 476 KB) holds no files from the port or the original mod:
+`jub-port-patch.json` is format 2 (about 920 KB). It holds no whole file from the port, the original mod or the game: only the labels, cells and rows it changes, the size table and the 25 UnitIcon models.
 
-- `strings`: the 79 label texts to add per MSBT inside `String_USen`, with content hashes before and after
-- `messages`: the same for the other message sarcs the build changes (`String_EUen`, `TalkSNpc_USen`, `TalkSNpc_EUen`). An entry also carries the label's ATR1 attribute bytes when the MSBT has them
-- `rstb`: the size table, deflated, with its hash
-- `eventflow`: the 40 new flow names, and the 3.0.3 values of the 7 flow-list entries the port's 2.x-era byml changed, which the page puts back (hashes before and after)
-- `with_fix`: the 25 UnitIcon models, which the page ships only when the memory fix box is ticked
-- `drop`: files the page always leaves out (empty in this release; the older patch listed the UnitIcon models here)
-- `bcsv`: empty in this release (kept in the format for later fixes)
+- `releases`: for each port release the patch knows (now `UJAP-V0.0.2`), the short SHA-256 of each of its romfs files. The page names the release it was given, or the closest one with the files that changed, came or went.
+- `fixes`: 37 fixes, each a list of ops on one file. Each op carries the hash of what it expects to find, so it is done, already as wanted, or skipped when the port changed that part:
+  - `msg`: add or set one MSBT label (text and ATR1 bytes) inside a message sarc
+  - `cell`, `row`: set one bcsv cell, or add one row, found by key
+  - `byml`: set one value by key path (the 9 flow-list entries)
+  - `drop`: leave a port file out, so the game uses its own (the workbench, the Roost)
+  - `delta`: a byte delta of one file, for a change the other ops can't say
+- A fix whose ops all miss is skipped and listed when the zip is made; the rest still go in. `partial` fixes may go in in part. `optional` fixes get a box on the page.
+- `rstb`: the size table, deflated, with its hash. `with_fix`: the 25 UnitIcon models, shipped only with the memory fix.
+
+Format 1 patches (one release, exact hashes) still build on the page.
+
+To make the patch for a new release, from the port's romfs (`$RR`), vanilla 3.0.3 and 1.0.0 romfs, and Jubbsticks 1.0.11's romfs:
+
+```
+python -I tools/make_fixes.py $RR v303 v100 j1011 fixes.json
+python -I tools/build_patch.py $RR <release tag> fixes.json vanilla-rstb.srsizetable jub-port-patch.json
+python -I tools/apply_patch.py $RR jub-port-patch.json py.zip
+node test/run.mjs <port .7z> jub-port-patch.json js.zip --report report.json
+python -I test/parity.py js.zip py.zip
+```
+
+Then publish it as `jub-port-patch.json` on a release here: the Pages workflow copies the latest release's patch next to the page.
+
+### Port release check
+
+`.github/workflows/port-release-check.yml` runs once a day. It downloads the port's latest Atmosphere `.7z` and this repo's released patch, builds them with `test/run.mjs`, and keeps one issue here, "Port release check: <tag>", saying whether the release is one the patch knows and which fixes didn't go in (`test/release-check.mjs` writes it). It closes the issue when the release is known and every fix went in. It only reads the port's repo and never posts there. `tools/audit_port.py` needs vanilla files, so a new audit stays a local step.
 
 The page reads the port's `.7z` itself (a small LZMA/LZMA2 reader in `docs/app.js`) or a zip of the same files, applies the patch, checks every hash and writes a stored (uncompressed) zip. In Node the whole build takes about 1.4 s from the 33 MB `.7z` and 0.3 s from a zip. Recompression is skipped: the message sarcs go out as a raw-block zstd frame and the size table as store-only Yaz0, which the game reads fine.
 
 ## Checks that were run
 
+- Format 2: the page's code (`node test/run.mjs`) and the Python applier (`tools/apply_patch.py`) give the same 1,334 files for V0.0.2 (`test/parity.py`: 0 differ). Unterminated message labels: 143 in the port, 0 in the build.
+- The page names V0.0.2 exactly, and a copy with one file changed, one removed and one added as "closest is V0.0.2" with those counts; fixes whose file changed are skipped and listed, and the build still finishes.
+- The release check's issue text was made from the exact and the altered copies. The workflow itself has not run on GitHub yet.
 - The page's code (`node test/run.mjs`) and the Python build give the same 1,269 files outside `EventFlow/` for V0.0.2, compared file by file (zstd files compared after decompressing). The page's full build is 1,310 files.
 - An older patch file (without `messages`) still builds the older zip byte for byte on the new page.
 - The `.7z` and a re-zipped copy of the same download give byte-identical output zips.

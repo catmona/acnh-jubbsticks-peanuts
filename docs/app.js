@@ -667,7 +667,7 @@ async function apply2(patch, files, zstd, on = null, memfix = true, others = [])
     if (!want) { rep.push({ id: fx.id, state: 'off' }); continue; }
     const res = []; for (const op of fx.ops) res.push(await checkOp(st, op));
     const bad = res.filter(r => r[0] === 'gone' || r[0] === 'diff'); let todo = res.filter(r => r[0] === 'done').map(r => r[2]), state;
-    if (bad.length && !fx.partial) { state = 'skipped'; todo = []; } else state = bad.length ? 'partial' : todo.length ? 'applied' : 'already';
+    if (bad.length && (!fx.partial || bad.length === res.length)) { state = 'skipped'; todo = []; } else state = bad.length ? 'partial' : todo.length ? 'applied' : 'already';
     for (const a of todo) a();
     rep.push({ id: fx.id, state, done: todo.length, ops: fx.ops.length, why: [...new Set(bad.map(b => b[1]))].sort().slice(0, 8), nbad: bad.length });
   }
@@ -688,15 +688,20 @@ async function apply2(patch, files, zstd, on = null, memfix = true, others = [])
   out.set(RS2, tab);
   return { out, rep, merged };
 }
-// Format 2 build: the port's download in, one zip out, plus what was found and what each fix did.
-async function build2(modBytes, patch, zstd, others = [], fix = true, on = null) {
-  const m = modBytes, is7z = m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C;
+// The port's download (a 7z or zip) in, a Map from romfs path to bytes out
+async function portFiles(m) {
+  const is7z = m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C;
   if (!is7z && !(m[0] === 0x50 && m[1] === 0x4B)) throw new Error("That is not the port's download. Pick the Atmosphere .7z from the port's Releases.");
   const all = is7z ? await read7z(m) : await readZip(m);
   const key = [...all.keys()].find(n => n.endsWith('romfs/Bcsv/ItemParam.bcsv'));
   if (!key) throw new Error('No romfs/Bcsv/ItemParam.bcsv in that file. Pick the Atmosphere download of the port (not the Emulator one).');
   const base = key.slice(0, -'Bcsv/ItemParam.bcsv'.length), files = new Map();
   for (const name of [...all.keys()].filter(k => k.startsWith(base)).sort()) files.set(name.slice(base.length), await all.get(name)());
+  return files;
+}
+// Format 2 build: the port's download in, one zip out, plus what was found and what each fix did.
+async function build2(modBytes, patch, zstd, others = [], fix = true, on = null) {
+  const files = await portFiles(modBytes);
   const rel = closest(patch, await census(files)), ot = [];
   for (const o of others) {
     const ob = o.bytes, of = ob[0] === 0x37 && ob[1] === 0x7A ? await read7z(ob) : await readZip(ob), k = [...of.keys()].find(n => n.endsWith(RS2));
@@ -712,7 +717,7 @@ async function build2(modBytes, patch, zstd, others = [], fix = true, on = null)
 function report2(patch, r) {
   const F = new Map(patch.fixes.map(f => [f.id, f])), lines = [];
   for (const x of r.rep) {
-    if (x.state === 'skipped') lines.push(`Skipped: ${F.get(x.id).title} (${x.why.join(', ')}${x.nbad > x.why.length ? ', ...' : ''} changed in this release)`);
+    if (x.state === 'skipped') lines.push(`Skipped: ${F.get(x.id).title} (${x.why.join(', ')}${x.why.length >= 8 ? ', ...' : ''} changed or gone in this release)`);
     else if (x.state === 'partial') lines.push(`Partly applied: ${F.get(x.id).title} (${x.nbad} of ${x.ops} changes did not fit)`);
   }
   return lines;
@@ -728,6 +733,13 @@ const memFixZip = () => writeZip([[`atmosphere/exefs_patches/${MEMFIX.set}/${MEM
 // Cheap check used when a file is picked: is this the port's download that the patch fits? Throws a friendly message if not.
 // A .7z is taken on trust (unpacking it takes seconds; build() checks every file again). A zip is checked by its ItemParam.
 async function check(modBytes, patch) {
+  if (patch.format === 2 && patch.tid === TID) {
+    const R = closest(patch, await census(await portFiles(modBytes))), v = R.name.replace(/^UJAP-/, '');
+    optBoxes(patch);
+    if (R.exact) return `Jubbsticks' Additions port ${v}`;
+    return `Jubbsticks' Additions port, not a release I know: closest is ${v} (${R.changed.length} files changed, ${R.new.length} new, ${R.gone.length} gone). `
+      + 'The fixes that still fit go in; the rest are listed when you make the zip.';
+  }
   if (patch.format !== 1 || patch.tid !== TID) throw new Error('That is not the jub-port-patch.json file.');
   const m = modBytes;
   if (m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C) return `Jubbsticks' Additions port ${patch.release.replace(/^UJAP-/, '')}`;
@@ -740,10 +752,33 @@ async function check(modBytes, patch) {
   return `Jubbsticks' Additions port ${patch.release.replace(/^UJAP-/, '')}`;
 }
 
-// What the page calls: one zip out (fzstd is the global the page loads before this file).
-async function make(modBytes, patch, o = {}) {
-  const fix = o.fix !== false, r = await build(modBytes, patch, d => fzstd.decompress(d), o.others || [], fix);
-  return { zip: r.zip, note: `${r.romfs} files` + (r.merged.length ? '. Size table: ' + r.merged.join('; ') : '') + (fix ? '' : '. The new fruit and gems have no icons without the memory fix') };
+// The optional fixes as checkboxes, on the Jubbsticks page only (#jub-opts; the QoL page loads this engine too and has no such box).
+// Every fix marked optional in the patch gets one, so a new optional fix needs no page edit.
+const escH = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+function optBoxes(patch) {
+  const box = typeof document !== 'undefined' && document.getElementById('jub-opts'); if (!box) return;
+  const opt = patch.fixes.filter(f => f.optional); if (!opt.length) return;
+  box.querySelector('.opts').innerHTML = opt.map(f => `<label class="fixopt"><input type="checkbox" data-fix="${escH(f.id)}"${f.default !== false ? ' checked' : ''}>
+    <span>${escH(f.title)}</span></label>`).join('');
+  box.hidden = false;
+}
+// The checked optional fixes, or null when the page has no boxes (then each fix's default applies)
+function optOn() {
+  const b = typeof document !== 'undefined' ? [...document.querySelectorAll('#jub-opts [data-fix]')] : [];
+  return b.length ? new Set(b.filter(x => x.checked).map(x => x.dataset.fix)) : null;
 }
 
-if (typeof module !== 'undefined') module.exports = { build, build2, apply2, report2, closest, census, check, make, writeZip, MEMFIX, memFixZip, yaz0Dec, rstcParse, rstcMerge, readZip, read7z, yaz0Raw, inflateRaw, unb64, cat, utf8, u32 };
+// What the page calls: one zip out (fzstd is the global the page loads before this file).
+async function make(modBytes, patch, o = {}) {
+  const fix = o.fix !== false, zstd = d => fzstd.decompress(d);
+  const tail = r => (r.merged.length ? '. Size table: ' + r.merged.join('; ') : '') + (fix ? '' : '. The new fruit and gems have no icons without the memory fix');
+  if (patch.format === 2) {
+    const r = await build2(modBytes, patch, zstd, o.others || [], fix, o.on || optOn()), lines = report2(patch, r);
+    return { zip: r.zip, note: `${r.romfs} files from port ${r.release.name.replace(/^UJAP-/, '')}` + (r.release.exact ? '' : ' (closest release)')
+      + '. ' + (lines.length ? lines.join('. ') : 'Every fix went in') + tail(r) };
+  }
+  const r = await build(modBytes, patch, zstd, o.others || [], fix);
+  return { zip: r.zip, note: `${r.romfs} files` + tail(r) };
+}
+
+if (typeof module !== 'undefined') module.exports = { build, build2, portFiles, optBoxes, optOn, apply2, report2, closest, census, check, make, writeZip, MEMFIX, memFixZip, yaz0Dec, rstcParse, rstcMerge, readZip, read7z, yaz0Raw, inflateRaw, unb64, cat, utf8, u32 };
