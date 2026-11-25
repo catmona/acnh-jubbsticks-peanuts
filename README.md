@@ -16,7 +16,7 @@ The mod is Jubbsticks' work, and the port to 3.0.x is dragonloverlord's. I only 
 <img src="docs/img/features/new-stuff.png" alt="Jubbsticks' Additions: new items, new NPCs and new interactions, lots to discover and unlock, English only for now" width="100%">
 <img src="docs/img/features/stacks.png" alt="Stacks to 254: fish, bugs, dive fish, clams and trash all stack, every stack limit goes up to 254, done with romfs edits only (dragonloverlord's addition)" width="100%">
 <img src="docs/img/features/port.png" alt="From the port: all tools are unbreakable, the new tool and balloon DIYs stay out of hotel delivery requests" width="100%">
-<img src="docs/img/features/not-yet.png" alt="Not working on Peanuts yet: the port's EventFlow and extra message files, so some new NPC dialogue is missing; its UnitIcon models; they crash or hang ACNH 3.0.3 on Peanuts, so the patcher leaves them out for now" width="100%">
+<img src="docs/img/features/not-yet.png" alt="Not working on Peanuts yet: the port's extra message files, so some new NPC lines may be missing; its UnitIcon models; they crash ACNH 3.0.3 on Peanuts, so the patcher leaves them out for now" width="100%">
 
 ## Install
 
@@ -39,7 +39,7 @@ This is early. Here's where it stands:
 - The patch only fits port version `UJAP-V0.0.2`. dragonloverlord is still fixing item IDs in the port, so new versions will keep coming. The page refuses a newer download until I make a patch for it.
 - An earlier build for V0.0.1 boots on my AYN Thor (Peanuts Native 0.1.7). I haven't played far enough yet to check the new items in game.
 - This V0.0.2 build hasn't been on the Thor yet. It comes out byte for byte the same from the page as from my PC build.
-- The EventFlow files (NPC dialogue flows) aren't in the release yet. A test build with them boots on Peanuts 0.1.8 and loads my island, but I haven't checked that a new NPC flow plays. Notes are in [PORT.md](docs/PORT.md).
+- The EventFlow files (NPC dialogue flows) are in now: the patch adds the port's 40 new flows and merges its flow list into the 3.0.3 one. It boots on Peanuts 0.1.8 and loads my island, but I haven't checked that a new NPC flow plays. Notes are in [PORT.md](docs/PORT.md).
 - With ACNH Combined 3.0.3 also installed, the island load crashes because of Combined's oak tree model (`PltTreeOak`). Without that one model, QoL, this mod and Combined all load together on my Thor. That's a fix for Combined, not this mod.
 
 ## About the AI part
