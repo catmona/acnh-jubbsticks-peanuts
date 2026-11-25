@@ -24,9 +24,9 @@ CARDS = [
                                  'Done with romfs edits only (dragonloverlord\'s addition)'], '#6dbb4f'),
     ('port', 'From the port', ['All tools are unbreakable',
                                'The new tool and balloon DIYs stay out of hotel delivery requests'], '#6dbb4f'),
-    ('not-yet', 'Not working on Peanuts yet', ['The port\'s extra message files, so some new NPC lines may be missing',
-                                                'Its UnitIcon models',
-                                                'They crash ACNH 3.0.3 on Peanuts, so the patcher leaves them out for now'], '#f2a541'),
+    ('not-yet', 'Not working on Peanuts yet', ['Item icons for the new fruit and gems',
+                                                'Their UnitIcon models crash ACNH 3.0.3 on Peanuts 0.1.8',
+                                                'The patcher leaves them out until that\'s fixed'], '#f2a541'),
 ]
 
 CARD_CSS = """

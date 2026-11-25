@@ -350,7 +350,13 @@ function msbtEdit(b, add, set) {
   const texts = [...Array(cnt)].map((_, i) => T.subarray(offs[i], offs[i + 1]));
   const idx = new Map(labels);
   for (const [name, t] of set) { if (!idx.has(name)) throw new Error('label missing: ' + name); texts[idx.get(name)] = unb64(t); }
-  for (const [name, t] of add) { if (idx.has(name)) throw new Error('label already there: ' + name); idx.set(name, texts.length); texts.push(unb64(t)); }
+  const A = find('ATR1'), es = A ? new DataView(A[1].buffer, A[1].byteOffset, A[1].byteLength).getUint32(4, true) : 0, attrs = [];
+  for (const [name, t, a] of add) {   // a: the label's ATR1 entry, for files whose entries are not 0 bytes
+    if (idx.has(name)) throw new Error('label already there: ' + name);
+    const ab = a ? unb64(a) : new Uint8Array(0); if (ab.length !== es) throw new Error('attribute size for ' + name);
+    idx.set(name, texts.length); texts.push(unb64(t)); attrs.push(ab);
+  }
+  if (attrs.length && es && A[1].length !== 8 + es * cnt) throw new Error('ATR1 has a string pool; not handled');
   const hashg = nm => { let h = 0; for (const ch of utf8(nm)) h = (Math.imul(h, 0x492) + ch) >>> 0; return h % g; };
   const groups = [...Array(g)].map(() => []);
   for (const [nm, i] of [...idx].sort((a, c) => a[1] - c[1])) groups[hashg(nm)].push([nm, i]);
@@ -364,7 +370,7 @@ function msbtEdit(b, add, set) {
   const newT = cat([u32(texts.length), ...toffs.map(u32), ...texts]);
   const out = [b.slice(0, 0x20)]; let len = 0x20;
   for (const [mg, d0] of secs) {
-    const m = String.fromCharCode(...mg), d = m === 'LBL1' ? newL : m === 'TXT2' ? newT : m === 'ATR1' ? cat([u32(texts.length), d0.subarray(4)]) : d0;
+    const m = String.fromCharCode(...mg), d = m === 'LBL1' ? newL : m === 'TXT2' ? newT : m === 'ATR1' ? cat([u32(texts.length), d0.subarray(4), ...attrs]) : d0;
     const hdr = new Uint8Array(16); hdr.set(mg); new DataView(hdr.buffer).setUint32(4, d.length, true); out.push(hdr, d); len += 16 + d.length;
     const pad = (16 - (len % 16)) % 16; if (pad) { out.push(new Uint8Array(pad).fill(0xab)); len += pad; }
   }
@@ -435,16 +441,19 @@ async function build(modBytes, patch, zstd, others = []) {   // others: [{ name,
     if (await sha256(d) !== p.out_sha256) throw new Error(r + ' came out wrong. Please open an issue.');
     done.set(r, d);
   }
-  const S = patch.strings, plain = zstd(await get(S.file));
-  if (await sha256(plain) !== S.in_content_sha256) throw new Error(S.file + ' is not the one from ' + patch.release + '.');
-  const sar = sarcParse(plain), repl = new Map();
-  for (const [name, e] of Object.entries(S.msbt)) {
-    const ent = sar.ents.find(x => x.name === name); if (!ent) throw new Error('missing ' + name);
-    repl.set(name, msbtEdit(ent.data, e.add, e.set));
+  // Message sarcs: put back the 3.0.3 labels the port's copies lack ('strings' is String_USen, 'messages' the others)
+  for (const S of [patch.strings, ...(patch.messages || [])]) {
+    const plain = zstd(await get(S.file));
+    if (await sha256(plain) !== S.in_content_sha256) throw new Error(S.file + ' is not the one from ' + patch.release + '.');
+    const sar = sarcParse(plain), repl = new Map();
+    for (const [name, e] of Object.entries(S.msbt)) {
+      const ent = sar.ents.find(x => x.name === name); if (!ent) throw new Error('missing ' + name);
+      repl.set(name, msbtEdit(ent.data, e.add, e.set));
+    }
+    const nsar = sarcReplace(plain, repl);
+    if (await sha256(nsar) !== S.out_content_sha256) throw new Error(S.file + ' came out wrong. Please open an issue.');
+    done.set(S.file, zstdRaw(nsar));
   }
-  const nsar = sarcReplace(plain, repl);
-  if (await sha256(nsar) !== S.out_content_sha256) throw new Error(S.file + ' came out wrong. Please open an issue.');
-  done.set(S.file, zstdRaw(nsar));
   const R = patch.rstb, tab = cat([utf8('RSTC'), u32(R.count), await inflateRaw(unb64(R.data))]);
   if (await sha256(tab) !== R.content_sha256) throw new Error('The size table came out wrong. Please open an issue.');
   // Peanuts takes a file from the first-installed mod, so this table must also allow every size the other mods raised
@@ -459,8 +468,10 @@ async function build(modBytes, patch, zstd, others = []) {   // others: [{ name,
     mt = r.tab; merged.push(`raised ${r.raised}, added ${r.added} from ${o.name}`);
   }
   done.set(RS, yaz0Raw(mt));
-  // Device-tested on ACNH 3.0.3: the port's 2.x-era EventFlow files hang the load, UnitIcon models crash it, other Message files are not 3.0.3's
-  const BAD = /^(EventFlow\/|Model\/UnitIcon|Message\/(?!String_USen))/;
+  // EventFlow: only the listed new flows go in (the port's 2.x-era copies of 3.0.3 flows hang the load). UnitIcon models
+  // crash ACNH 3.0.3 on Peanuts 0.1.8 at the title, so they stay out. A patch without 'messages' predates the label fix
+  // of the other Message sarcs, so it keeps those out too.
+  const BAD = patch.messages ? /^(EventFlow\/|Model\/UnitIcon)/ : /^(EventFlow\/|Model\/UnitIcon|Message\/(?!String_USen))/;
   const EF = patch.eventflow, okFlow = new Set((EF ? EF.flows : []).map(f => 'EventFlow/' + f + '.bfevfl'));
   if (EF) {   // 3.0.3's Info byml plus the port's additions: put back the 3.0.3 values of the entries the port changed
     const d = await get(EF.file);
