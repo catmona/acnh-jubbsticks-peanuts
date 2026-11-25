@@ -11,10 +11,17 @@
 
 All of this is Jubbsticks' and dragonloverlord's work, I just got it running on Peanuts. If something doesn't work, please open an issue here, not on their pages!
 
-<img src="docs/img/features/new-stuff.png" alt="New Stuff: new items, new NPCs and new things to do, lots to discover and unlock, English only for now" width="100%">
-<img src="docs/img/features/stacks.png" alt="Stacking: fish, bugs, dive fish, clams and trash stack in your pockets, stacks go up to 254" width="100%">
-<img src="docs/img/features/tools.png" alt="Tools and DIY: tools never break, craft bait in bulk, hotel requests skip the new gem-heavy DIYs" width="100%">
-<img src="docs/img/features/icons.png" alt="New Icons: the new fruit and gems get their own pocket icons, needs the memory fix, which the patcher adds for you" width="100%">
+<img src="docs/img/features/visitors.png" alt="New Visitors: Phineas sets up a balloon cart on Wednesdays and Saturdays with one free balloon a day, and gives DIY recipes for your Nook Miles stamps; Mr. Resetti runs a mine under a manhole on weekdays and sells gems for Nook Miles; his big brother Don sells gems too once you bring him a coffee" width="100%">
+<img src="docs/img/features/neighbours.png" alt="New Jobs for Old Friends: Brewster makes coffee to go and trades gems for your gyroids; Leif grows your bamboo for 3,000 Bells and mails the shoots back; Redd's raffle gives out the new fruit, and lucky tickets give silver and gem axe recipes" width="100%">
+<img src="docs/img/features/tools.png" alt="Tools: every tool is unbreakable, from flimsy to golden; sturdy axe, net, fishing rod, shovel and watering can; ruby, sapphire, emerald, amethyst and silver versions of all six tools; a weather radar, plus a Nook Miles goal for helping Digby log the weather" width="100%">
+<img src="docs/img/features/fruit.png" alt="Fruit and Flowers: banana, durian, lemon, lychee, mango and persimmon trees; perfect apple, orange, pear, peach and cherry trees, and perfect bamboo; coral and pink pansies, plus hybrid red, blue and coral ones" width="100%">
+<img src="docs/img/features/furniture.png" alt="Furniture and Food: a golden set with bed, chair, bench, table, closet, chest, screen, clock, wall torch and more; illuminated arch, mini tree, heart and clock, a woodland set and an iceberg; smoothies of the new and perfect fruit, lemonade, candy and caramel apples, fritters" width="100%">
+<img src="docs/img/features/balloons.png" alt="Gems and Balloons: ruby, sapphire, emerald, amethyst and silver nuggets; over 100 balloons in bunny, heart, kitty, leaf and star shapes in every colour, plus gem, gold and silver ones; hotel DIY requests skip the new gem-heavy recipes" width="100%">
+<img src="docs/img/features/miles.png" alt="Nook Miles: redeem Bell vouchers and Nook Miles Tickets 1, 3, 5, 10 or 20 at a time; six new Nook Miles goals and a Dig Up Clams task for Nook Miles+; new title words, and fish bait from all your manila clams in one go" width="100%">
+<img src="docs/img/features/stacks.png" alt="Stacking: fish, bugs, sea creatures, clams and trash stack, they didn't before; fruit, flowers, seeds, materials, ore, bait, medicine, eggs, tickets, seasonal items and more go up to 254" width="100%">
+<img src="docs/img/features/icons.png" alt="New Icons: the new fruit and gems get their own pocket icons; needs the memory fix, which the patcher adds for you" width="100%">
+
+English only for now, and the original's two bananas per tree is left out (it needed an exefs patch that no longer exists).
 
 ## Install
 

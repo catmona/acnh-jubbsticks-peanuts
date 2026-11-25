@@ -17,12 +17,31 @@ GRASS = ("url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' wid
 
 # (file, title, bullets, accent colour)
 CARDS = [
-    ('new-stuff', 'New Stuff', ['New items, new NPCs and new things to do',
-                                'Lots to discover and unlock', 'English only for now'], '#6dbb4f'),
-    ('stacks', 'Stacking', ['Fish, bugs, dive fish, clams and trash stack in your pockets',
-                            'Stacks go up to 254'], '#4a9fd8'),
-    ('tools', 'Tools & DIY', ['Tools never break', 'Craft bait in bulk',
-                              'Hotel requests skip the new gem-heavy DIYs'], '#e8913a'),
+    ('visitors', 'New Visitors', ["Phineas sets up a balloon cart on Wednesdays and Saturdays, one free balloon a day",
+                                  'Show him your Nook Miles stamps to get DIY recipes',
+                                  'Mr. Resetti runs a mine under a manhole on weekdays and sells gems for Nook Miles',
+                                  'His big brother Don sells gems too, once you bring him a coffee'], '#6dbb4f'),
+    ('neighbours', 'New Jobs for Old Friends', ['Brewster makes coffee to go and trades gems for your gyroids',
+                                                "Leif grows your bamboo for 3,000 Bells and mails the shoots back",
+                                                "Redd's raffle gives out the new fruit, and lucky tickets give silver and gem axe recipes"], '#a8743f'),
+    ('tools', 'Tools', ['Every tool is unbreakable, from flimsy to golden',
+                        'Sturdy axe, net, fishing rod, shovel and watering can',
+                        'Ruby, sapphire, emerald, amethyst and silver versions of all six tools',
+                        'A weather radar, plus a Nook Miles goal for helping Digby log the weather'], '#e8913a'),
+    ('fruit', 'Fruit & Flowers', ['Banana, durian, lemon, lychee, mango and persimmon trees',
+                                  'Perfect apple, orange, pear, peach and cherry trees, and perfect bamboo',
+                                  'Coral and pink pansies, plus hybrid red, blue and coral ones'], '#d9534f'),
+    ('furniture', 'Furniture & Food', ['A golden set: bed, chair, bench, table, closet, chest, screen, clock, wall torch and more',
+                                       'Illuminated arch, mini tree, heart and clock, a woodland set and an iceberg',
+                                       'Smoothies of the new and perfect fruit, lemonade, candy and caramel apples, fritters'], '#c9a227'),
+    ('balloons', 'Gems & Balloons', ['Ruby, sapphire, emerald, amethyst and silver nuggets',
+                                     'Over 100 balloons: bunny, heart, kitty, leaf and star shapes in every colour, plus gem, gold and silver ones',
+                                     "Hotel DIY requests skip the new gem-heavy recipes"], '#d46aa8'),
+    ('miles', 'Nook Miles', ['Redeem Bell vouchers and Nook Miles Tickets 1, 3, 5, 10 or 20 at a time',
+                             'Six new Nook Miles goals and a Dig Up Clams task for Nook Miles+',
+                             'New title words, and fish bait from all your manila clams in one go'], '#2fa39a'),
+    ('stacks', 'Stacking', ["Fish, bugs, sea creatures, clams and trash stack, they didn't before",
+                            'Fruit, flowers, seeds, materials, ore, bait, medicine, eggs, tickets, seasonal items and more go up to 254'], '#4a9fd8'),
     ('icons', 'New Icons', ['The new fruit and gems get their own pocket icons',
                             'Needs the memory fix, which the patcher adds for you'], '#8f6fd6'),
 ]
@@ -59,7 +78,7 @@ h1 b {{ color: #4b9435; font-weight: 600; }}
 <span class="kick">ACNH 3.0.3 &middot; PEANUTS NATIVE</span><span class="unoff">FAN PORT</span>
 <h1>Jubbsticks' Additions<br><b>for Peanuts</b></h1>
 <p class="sub">dragonloverlord's unofficial port, running on Android</p>
-<div class="pills"><span>New items</span><span>New NPCs</span><span>Stacks to 254</span><span>Unbreakable tools</span></div>
+<div class="pills"><span>Phineas' balloons</span><span>Resetti's mine</span><span>Gem tools</span><span>Stacks to 254</span></div>
 </div></body></html>"""
 
 
