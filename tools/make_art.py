@@ -15,18 +15,16 @@ GRASS = ("url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' wid
          "%3Cpath d='M30 12c-9 6-11 17-5 26 9 0 15-8 14-18-2-4-5-7-9-8z'/%3E%3Cpath d='M90 72c-9 6-11 17-5 26 9 0 15-8 14-18-2-4-5-7-9-8z' transform='rotate(35 90 85)'/%3E"
          "%3C/g%3E%3Cg fill='%23ffffff' opacity='.45'%3E%3Ccircle cx='88' cy='22' r='3'/%3E%3Ccircle cx='24' cy='88' r='3'/%3E%3C/g%3E%3C/svg%3E\")")
 
-# (file, title, bullets, accent): accent green for features, orange for an honest "not yet" card when one is needed
+# (file, title, bullets, accent colour)
 CARDS = [
-    ('new-stuff', 'Jubbsticks\' Additions', ['New items, new NPCs and new interactions',
-                                            'Lots to discover and unlock', 'English only for now'], '#6dbb4f'),
-    ('stacks', 'Stacks to 254', ['Fish, bugs, dive fish, clams and trash all stack',
-                                 'Every stack limit goes up to 254, the game\'s cap',
-                                 'Done with romfs edits only (dragonloverlord\'s addition)'], '#6dbb4f'),
-    ('port', 'From the port', ['All tools are unbreakable',
-                               'The new tool and balloon DIYs stay out of hotel delivery requests'], '#6dbb4f'),
-    ('icons', 'New fruit and gem icons', ['The new fruit and gems get their own pocket icons',
-                                          'They need the memory fix, a tiny extra mod the patcher gives you too',
-                                          'Without it, the patcher leaves the icons out so the game doesn\'t crash'], '#6dbb4f'),
+    ('new-stuff', 'New Stuff', ['New items, new NPCs and new things to do',
+                                'Lots to discover and unlock', 'English only for now'], '#6dbb4f'),
+    ('stacks', 'Stacking', ['Fish, bugs, dive fish, clams and trash stack in your pockets',
+                            'Stacks go up to 254'], '#4a9fd8'),
+    ('tools', 'Tools & DIY', ['Tools never break', 'Craft bait in bulk',
+                              'Hotel requests skip the new gem-heavy DIYs'], '#e8913a'),
+    ('icons', 'New Icons', ['The new fruit and gems get their own pocket icons',
+                            'Needs the memory fix, which the patcher adds for you'], '#8f6fd6'),
 ]
 
 CARD_CSS = """
