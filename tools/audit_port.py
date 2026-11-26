@@ -1,6 +1,6 @@
 """Audit the Jubbsticks port's romfs against vanilla 3.0.3 and Jubbsticks 1.0.11 (2.0-era).
 Usage: audit_port.py <port romfs> <vanilla 3.0.3 files> <vanilla 3.0.3 size table> <Jubbsticks 1.0.11 zip> <out json>
-Vanilla files: the 3.0.3 copies of the port's non-model files, from your own game (as for build_jub.py).
+Vanilla files: the 3.0.3 copies of the port's non-model files, from your own game.
 For each port file: new or replacing vanilla, byte-identical to Jubbsticks 1.0.11 (2.0-era) or not, and against vanilla:
 flows: strings vanilla has that the port lacks (3.0 content the port file drops); bcsv: rows and ids; byml: diffs; sarc: files."""
 import sys, os, zlib, json, re, struct, zipfile, collections

@@ -246,39 +246,9 @@ Two of them are also in this port: `SNPC_slo_02_Commune` (Leif on Harv's Island)
 
 Fixing that needs a merged flow.
 
-## The patch file
+## Port release check
 
-`jub-port-patch.json` is format 2 (about 920 KB). It holds no whole file from the port, the original mod or the game: only the labels, cells and rows it changes, the size table and the 25 UnitIcon models.
-
-- `releases`: for each port release the patch knows (now `UJAP-V0.0.2`), the short SHA-256 of each of its romfs files. The page names the release it was given, or the closest one with the files that changed, came or went.
-- `fixes`: 37 fixes, each a list of ops on one file. Each op carries the hash of what it expects to find, so it is done, already as wanted, or skipped when the port changed that part:
-  - `msg`: add or set one MSBT label (text and ATR1 bytes) inside a message sarc
-  - `cell`, `row`: set one bcsv cell, or add one row, found by key
-  - `byml`: set one value by key path (the 9 flow-list entries)
-  - `drop`: leave a port file out, so the game uses its own (the workbench, the Roost)
-  - `delta`: a byte delta of one file, for a change the other ops can't say
-- A fix whose ops all miss is skipped and listed when the zip is made; the rest still go in. `partial` fixes may go in in part. `optional` fixes get a box on the page.
-- `rstb`: the size table, deflated, with its hash. `with_fix`: the 25 UnitIcon models, shipped only with the memory fix.
-
-Format 1 patches (one release, exact hashes) still build on the page.
-
-To make the patch for a new release, from the port's romfs (`$RR`), vanilla 3.0.3 and 1.0.0 romfs, and Jubbsticks 1.0.11's romfs:
-
-```
-python -I tools/make_fixes.py $RR v303 v100 j1011 fixes.json
-python -I tools/build_patch.py $RR <release tag> fixes.json vanilla-rstb.srsizetable jub-port-patch.json
-python -I tools/apply_patch.py $RR jub-port-patch.json py.zip
-node test/run.mjs <port .7z> jub-port-patch.json js.zip --report report.json
-python -I test/parity.py js.zip py.zip
-```
-
-Then publish it as `jub-port-patch.json` on a release here: the Pages workflow copies the latest release's patch next to the page.
-
-### Port release check
-
-`.github/workflows/port-release-check.yml` runs once a day. It downloads the port's latest Atmosphere `.7z` and this repo's released patch, builds them with `test/run.mjs`, and keeps one issue here, "Port release check: <tag>", saying whether the release is one the patch knows and which fixes didn't go in (`test/release-check.mjs` writes it). It closes the issue when the release is known and every fix went in. It only reads the port's repo and never posts there. `tools/audit_port.py` needs vanilla files, so a new audit stays a local step.
-
-The page reads the port's `.7z` itself (a small LZMA/LZMA2 reader in `docs/app.js`) or a zip of the same files, applies the patch, checks every hash and writes a stored (uncompressed) zip. In Node the whole build takes about 1.4 s from the 33 MB `.7z` and 0.3 s from a zip. Recompression is skipped: the message sarcs go out as a raw-block zstd frame and the size table as store-only Yaz0, which the game reads fine.
+`.github/workflows/port-release-check.yml` runs once a day. It downloads the port's latest Atmosphere `.7z`, builds it through the page's engine with `test/run.mjs`, and keeps one issue here, "Port release check: <tag>", open only while the build fails or an output file is bigger than its size-table entry. It closes the issue when the build passes. The page reads the `.7z` itself (a small LZMA/LZMA2 reader in `docs/app.js`) or a zip of the same files; in Node the build takes about 1.4 s.
 
 ## Checks that were run
 
