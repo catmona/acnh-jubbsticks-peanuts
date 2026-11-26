@@ -1,3 +1,6 @@
+> **Status:** the page no longer changes the port's content. It repackages the port's romfs as it ships (any release), adds the memory fix, and rebuilds the size table. Everything below is the audit of port V0.0.2 and the earlier builds that patched it; read it as findings for the port, not as what the page does now.
+> The port's V0.0.3 and V0.0.4 fixed recipes 1226/1227 (they made items 883/884) and the pansies without field objects. A port PR fixes the message labels (the lost and cut-off ones) and FgMainParam's size entry.
+
 # How the Peanuts build is made
 
 Notes on what the patcher does to the port's download and why. Everything here is for ACNH 3.0.3 under Peanuts Native 0.1.8.
