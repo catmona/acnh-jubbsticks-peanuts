@@ -254,86 +254,22 @@ function writeZip(entries) {   // [name, bytes], stored (no compression)
   return new Blob([...parts, ...dir, new Uint8Array(e.buffer)], { type: 'application/zip' });
 }
 
-const hex = b => Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, '0')).join('');
 const unb64 = s => Uint8Array.from(atob(s), ch => ch.charCodeAt(0));
 const cat = parts => { const o = new Uint8Array(parts.reduce((a, p) => a + p.length, 0)); let at = 0; for (const p of parts) { o.set(p, at); at += p.length; } return o; };
 const u32 = n => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b; };
 const utf8 = s => new TextEncoder().encode(s);
 
-function yaz0Raw(d) {   // store-only Yaz0 (all literals)
-  const out = new Uint8Array(16 + d.length + Math.ceil(d.length / 8)); out.set([0x59, 0x61, 0x7a, 0x30]);
-  new DataView(out.buffer).setUint32(4, d.length, false); let o = 16;
-  for (let i = 0; i < d.length; i += 8) { const n = Math.min(8, d.length - i); out[o++] = (0xff << (8 - n)) & 0xff; out.set(d.subarray(i, i + n), o); o += n; }
-  return out.subarray(0, o);
-}
-
-function yaz0Dec(b) {
-  if (hex(b.subarray(0, 4)) !== '59617a30') throw new Error('not a Yaz0 file');
-  const n = new DataView(b.buffer, b.byteOffset, b.byteLength).getUint32(4, false), out = new Uint8Array(n);
-  let i = 16, o = 0, code = 0, bits = 0;
-  while (o < n) {
-    if (!bits) { code = b[i++]; bits = 8; }
-    if (code & 0x80) out[o++] = b[i++];
-    else {
-      const b1 = b[i++], b2 = b[i++]; let len = b1 >> 4; const src = o - (((b1 & 15) << 8) | b2) - 1;
-      len = len ? len + 2 : b[i++] + 18;
-      for (let k = 0; k < len && o < n; k++) out[o + k] = out[src + k];
-      o += Math.min(len, n - o);
-    }
-    code = (code << 1) & 0xff; bits--;
-  }
-  return out;
-}
-// RSTC table: 'RSTC', u32 count, u32 version, count x (u32 crc, u32 size, u32 0) sorted by crc, then a tail
-function rstcParse(t) {
-  const v = new DataView(t.buffer, t.byteOffset, t.byteLength); if (hex(t.subarray(0, 4)) !== '52535443') throw new Error('not a size table');
-  const n = v.getUint32(4, true), ents = new Map();
-  for (let i = 0; i < n; i++) ents.set(v.getUint32(12 + 12 * i, true), [v.getUint32(16 + 12 * i, true), v.getUint32(20 + 12 * i, true)]);
-  return { ver: v.getUint32(8, true), ents, tail: t.subarray(12 + 12 * n) };
-}
-// Our table, with every size raised to the other mod's where that is larger, and its entries added
-function rstcMerge(ours, theirs) {
-  const A = rstcParse(ours), B = rstcParse(theirs); let raised = 0, added = 0;
-  if (A.ver !== B.ver) throw new Error('Its size table is version ' + B.ver + ', ours is ' + A.ver + '.');
-  for (const [k, e] of B.ents) {
-    const a = A.ents.get(k);
-    if (!a) { A.ents.set(k, e); added++; } else if (e[0] > a[0]) { a[0] = e[0]; raised++; }
-  }
-  const keys = [...A.ents.keys()].sort((x, y) => x - y), out = new Uint8Array(12 + 12 * keys.length + A.tail.length), v = new DataView(out.buffer);
-  out.set([0x52, 0x53, 0x54, 0x43]); v.setUint32(4, keys.length, true); v.setUint32(8, A.ver, true);
-  keys.forEach((k, i) => { const e = A.ents.get(k); v.setUint32(12 + 12 * i, k, true); v.setUint32(16 + 12 * i, e[0], true); v.setUint32(20 + 12 * i, e[1], true); });
-  out.set(A.tail, 12 + 12 * keys.length);
-  return { tab: out, raised, added };
-}
-
 // Any release of the port: the Atmosphere .7z or zip with romfs/Bcsv/ItemParam.bcsv. Every file under that romfs goes out as the port ships
-// it, under atmosphere/contents/<tid>/romfs/. Only the size table is rebuilt: the port's own, raised to the other mods' (others: [{ name, bytes }]).
-// Peanuts takes a file from the first-installed mod, so this table must also allow every size the other mods raised.
-async function build(modBytes, zstd, others = []) {
+// it, size table included, under atmosphere/contents/<tid>/romfs/. The page's size table comes from acnh-rstb-fixer (docs/rstb), not from here.
+async function build(modBytes) {
   const m = modBytes, is7z = m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C;
   if (!is7z && !(m[0] === 0x50 && m[1] === 0x4B)) throw new Error("That is not the port's download. Pick the Atmosphere .7z from the port's Releases.");
   const files = is7z ? await read7z(m) : await readZip(m);
   const key = [...files.keys()].find(n => n.endsWith('romfs/Bcsv/ItemParam.bcsv'));
   if (!key) throw new Error('No romfs/Bcsv/ItemParam.bcsv in that file. Pick the Atmosphere download of the port (not the Emulator one).');
-  const base = key.slice(0, -'Bcsv/ItemParam.bcsv'.length), RS = 'System/Resource/ResourceSizeTable.srsizetable', out = `atmosphere/contents/${TID}/romfs/`;
-  const merged = [], entries = []; let mt = null;
-  for (const name of [...files.keys()].filter(k => k.startsWith(base)).sort()) {
-    const r = name.slice(base.length), d = await files.get(name)();
-    if (r === RS) { mt = yaz0Dec(d); continue; }
-    entries.push([out + r, d]);
-  }
-  if (!mt) throw new Error('No ' + RS + ' in that download.');
-  for (const o of others) {
-    const ob = o.bytes, o7 = ob[0] === 0x37 && ob[1] === 0x7A, of = o7 ? await read7z(ob) : await readZip(ob);
-    const k = [...of.keys()].find(n => n.endsWith(RS));
-    if (!k) { merged.push(o.name + ': no size table, skipped'); continue; }
-    let t; try { t = yaz0Dec(await of.get(k)()); } catch (e) { throw new Error(o.name + ': ' + e.message); }
-    let r; try { r = rstcMerge(mt, t); } catch (e) { throw new Error(o.name + ': ' + e.message); }
-    mt = r.tab; merged.push(`raised ${r.raised}, added ${r.added} from ${o.name}`);
-  }
-  entries.push([out + RS, yaz0Raw(mt)]);
-  entries.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
-  return { zip: writeZip(entries), romfs: entries.length, merged };
+  const base = key.slice(0, -'Bcsv/ItemParam.bcsv'.length), out = `atmosphere/contents/${TID}/romfs/`, entries = [];
+  for (const name of [...files.keys()].filter(k => k.startsWith(base)).sort()) entries.push([out + name.slice(base.length), await files.get(name)()]);
+  return { zip: writeZip(entries), romfs: entries.length };
 }
 
 
@@ -357,13 +293,13 @@ async function check(modBytes) {
   return "Jubbsticks' Additions port";
 }
 
-// What the page calls: one zip out (fzstd is the global the page loads before this file). The patch argument is ignored.
+// What the page calls: one zip out. The patch and o arguments are ignored.
 async function make(modBytes, patch, o = {}) {
-  const r = await build(modBytes, d => fzstd.decompress(d), o.others || []);
-  return { zip: r.zip, note: `${r.romfs} files` + (r.merged.length ? '. Size table: ' + r.merged.join('; ') : '') };
+  const r = await build(modBytes);
+  return { zip: r.zip, note: `${r.romfs} files` };
 }
 
-if (typeof module !== 'undefined') module.exports = { build, check, make, writeZip, MEMFIX, memFixZip, yaz0Dec, yaz0Raw, rstcParse, rstcMerge, readZip, read7z, crc32, unb64, cat, utf8, u32 };
+if (typeof module !== 'undefined') module.exports = { build, check, make, writeZip, MEMFIX, memFixZip, readZip, read7z, crc32, unb64, cat, utf8, u32 };
 
 globalThis.JUB = { make, check, build, MEMFIX, memFixZip, writeZip };
 })();
