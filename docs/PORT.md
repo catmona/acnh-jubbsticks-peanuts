@@ -47,7 +47,7 @@ The port's `EventFlow/Info/EventFlowInfoProduct.byml` is a 2.x-era file that als
 
 ### Peanuts mod order and size tables
 
-Peanuts lays mods over the game in list order, and the **first** mod that has a file wins. There is no reorder: deleting and reinstalling a mod puts it last. The `ResourceSizeTable.srsizetable` is a file like any other, so only the first mod's table is used, and the game refuses any file bigger than its entry there. That is why Jubbsticks must be installed first, and why the patcher's optional "other mods" step (and `tools/build_rstb.py --with`) takes the largest size per file across this mod and the other mods' tables.
+Peanuts lays mods over the game in list order, and the **first** mod that has a file wins. There is no reorder: deleting and reinstalling a mod puts it last. The `ResourceSizeTable.srsizetable` is a file like any other, so only the first mod's table is used, and the game refuses any file bigger than its entry there. That is why the pages build the size table as its own small mod, installed first: [acnh-rstb-fixer](https://github.com/catmona/acnh-rstb-fixer) (the `docs/rstb` submodule) rebuilds it over every mod the player picks.
 
 ### ACNH Combined 3.0.3
 
@@ -248,16 +248,13 @@ Fixing that needs a merged flow.
 
 ## Port release check
 
-`.github/workflows/port-release-check.yml` runs once a day. It downloads the port's latest Atmosphere `.7z`, builds it through the page's engine with `test/run.mjs`, and keeps one issue here, "Port release check: <tag>", open only while the build fails or an output file is bigger than its size-table entry. It closes the issue when the build passes. The page reads the `.7z` itself (a small LZMA/LZMA2 reader in `docs/app.js`) or a zip of the same files; in Node the build takes about 1.4 s.
+`.github/workflows/port-release-check.yml` runs once a day. It downloads the port's latest Atmosphere `.7z`, builds it through the page's engine with `test/run.mjs`, and keeps one issue here, "Port release check: <tag>", open only while the build fails or an output file is bigger than its size-table entry. It closes the issue when the build passes. The page reads the `.7z` itself (a small LZMA/LZMA2 reader in `docs/app.js`) or a zip of the same files; in Node the build and size check take about 3 s.
 
 ## Checks that were run
 
-- Format 2: the page's code (`node test/run.mjs`) and the Python applier (`tools/apply_patch.py`) give the same 1,334 files for V0.0.2 (`test/parity.py`: 0 differ). Unterminated message labels: 143 in the port, 0 in the build.
-- The page names V0.0.2 exactly, and a copy with one file changed, one removed and one added as "closest is V0.0.2" with those counts; fixes whose file changed are skipped and listed, and the build still finishes.
-- The release check's issue text was made from the exact and the altered copies. The workflow itself has not run on GitHub yet.
-- The page's code (`node test/run.mjs`) and the Python build give the same 1,269 files outside `EventFlow/` for V0.0.2, compared file by file (zstd files compared after decompressing). The page's full build is 1,310 files.
-- An older patch file (without `messages`) still builds the older zip byte for byte on the new page.
-- The `.7z` and a re-zipped copy of the same download give byte-identical output zips.
-- A damaged `.7z` is refused with an error instead of a broken zip.
+- `node test/run.mjs` on V0.0.4: 1,336 files, 51.0 MB. The size table rebuilt over it raises 54 entries, adds 5 and removes 677 geometry entries; every sized file fits (84 sized, 1,231 geometry models left to the game, 0 fails).
+
+Earlier builds (V0.0.2 with the old fixes), kept for the memory-fix finding:
+
 - On an AYN Thor (Peanuts 0.1.8, frame rate cap "Game owned"), QoL, this V0.0.2 build and ACNH Combined 3.0.3 load the island together, in that list order (checked in `DM_ROMFS_OVERLAY`). With the cap at 60 fps and no memory fix, QoL and a no-icon build of this mod crashed during the island load (`CRASH sig=11 addr=0x30 pc=main+0x38bb0cc`): the same draw-array heap running out. With the memory fix, QoL, the full build (1,335 files, 25 icons), ACNH Combined 3.0.3 and the fix load the island at the 60 fps cap with no crash, at 42-49 fps. That run had the pack's `main.xmod.tsv` copied into `60/` by hand, which QoL needs until Peanuts passes `--xmod`. This mod at 60 fps without QoL was not tried.
 - Nobody has checked yet that one of the 40 new flows plays in game: the test island is at the tent stage, and its player can't reach the Resident Services tent or the villagers yet.
