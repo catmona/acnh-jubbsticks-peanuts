@@ -1,33 +1,28 @@
-> **Status:** the page no longer changes the port's content. It repackages the port's romfs as it ships (any release), adds the memory fix, and rebuilds the size table. Everything below is the audit of port V0.0.2 and the earlier builds that patched it; read it as findings for the port, not as what the page does now.
-> The port's V0.0.3 and V0.0.4 fixed recipes 1226/1227 (they made items 883/884) and the pansies without field objects. A port PR fixes the message labels (the lost and cut-off ones) and FgMainParam's size entry.
+> **Status:** the page does not change the port's content. It repackages the port's romfs as it ships (any release), adds the memory fix, and builds the size table. The audit further down is of port V0.0.2 and the earlier builds that patched it: read it as findings about the port, not as what the page does now.
+>
+> Fixed in the port since that audit:
+>
+> - V0.0.3 and V0.0.4: recipes 1226/1227 (they made items 883/884) and the pansies without field objects.
+> - V0.0.5: the missing space before item names, 76 broken message labels, FgMainParam's size entry and the file alignment.
+> - [Port PR #1](https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port/pull/1), merged as `c711fe5` on Nov 26, 2026: the message labels. It repairs the 67 still cut short, puts back 1,477 labels from 1.0.11 and the 3.0.3 labels the port lacked, names 9 unnamed items and gives the Nook Inc. balloon its name back. It was merged after V0.0.5, so it reaches players with a later release.
 
 # How the Peanuts build is made
 
-Notes on what the patcher does to the port's download and why. Everything here is for ACNH 3.0.3 under Peanuts Native 0.1.8.
+Notes on what the patcher does with the port's download and why. Everything here is for ACNH 3.0.3 under Peanuts Native 0.1.8.
 
-## What changes
+## What the page makes
 
-The output is the port's own romfs with these changes:
-
-| What | Why |
+| Zip, in install order | What is in it |
 | --- | --- |
-| The port's 25 `Model/UnitIcon*` models go in only with the memory fix | without it they crash 3.0.3 at the title (see below) |
-| `EventFlow/`: the 40 new flows go in, and `EventFlowInfoProduct.byml` is the 3.0.3 file plus the port's new entries | the port's own byml is 2.x-era (see EventFlow below) |
-| `Message/` sarcs: the vanilla 3.0.3 labels the port lacks (79 item names in `String_USen` and `String_EUen`, Leif's `SP_slo:400`), each from 3.0.3's file in the same language | the port's copies are 2.x-era |
-| `Message/` sarcs: the labels the port's message tool broke, in 12 sarcs | it wrote 143 labels with no end mark or cut off mid-tag. That is the missing space before item names (`STR_Article` "a " had no end mark, so the game ran on into the next label). With the lost labels below, it is also behind the blank dialogue boxes. The build has 0 |
-| `Message/` sarcs: 1.0.11 labels the port lost, in 12 sarcs (1,501 labels) | among them K.K.'s `SP_tkk_dream` 300 and 333 (his lines at launch) and the Roost board's text |
-| Recipes 1226 and 1227 make items 881 and 886 (the woodland arch and shrub) | the port moved the two items but not the recipes, which made souvenir bags (see Item tables) |
-| Names for 9 unnamed items in USen and EUen, and 3.0.3's "Nook Inc. balloon" for `Balloon_14540` | the woodland pieces, the petaltail dragonfly piece 1028, and six fish and insect models (see Item tables) |
-| `Bcsv/FgMainParam.bcsv` gets back 21 of 1.0.11's field-object rows | the port's pansy, tulip, hyacinth, anemone, lily and cosmos colours had nothing to plant |
-| Optional, on by default: `EventFlow/Ftr_Working.bfevfl` is left out, so the game uses its own 3.0.3 workbench, and the 4 `FTR_WorkingTable` labels get 3.0.3's text | the port's workbench is 1.0.11's, without 3.0's multi-craft or crafting from storage. Unticked, the port's bulk bait crafting stays |
-| Optional, off by default: the Roost's 9 files are left out | for the Roost crash below |
-| `System/Resource/ResourceSizeTable.srsizetable` is rebuilt | vanilla 3.0.3's table, plus the port's entries for its new files, with sizes raised where a port file is bigger |
+| Size table | `System/Resource/ResourceSizeTable.srsizetable`, built by [acnh-rstb-fixer](https://github.com/catmona/acnh-rstb-fixer) (`docs/rstb`) over every mod the player picks, the port included. It starts from vanilla 3.0.3's table when QoL is picked, and otherwise from the mods' own tables |
+| The port | every file under the download's `romfs/`, byte for byte, its own size table included, moved under `atmosphere/contents/01006F8002326000/romfs/` |
+| Memory fix, always made with this mod | one exefs patch that gives the draw-array heap more room, so the port's `Model/UnitIcon*` models don't crash the game (see below) |
 
-Apart from those rows, the item tables (`Bcsv/*`), stages, params, layouts and the other models go in exactly as the port ships them, including its 254 stack limit.
+The page accepts any release's Atmosphere `.7z`, or a zip of the same files, that has `romfs/Bcsv/ItemParam.bcsv`. With QoL picked too, its zip is made in the same run and goes before the port's. If the size table can't be built, the page says so and still makes the other zips.
 
-## What is left out, and why
+## What earlier builds left out, and why
 
-Earlier builds left out the UnitIcon models and the other `Message/` sarcs after this bisect on an AYN Thor (each build listed in the launch log's `DM_ROMFS_OVERLAY`, so the mod was really loaded). These tests ran on V0.0.1 builds installed next to two other mods:
+The page now leaves nothing out. Earlier builds left out the UnitIcon models and the other `Message/` sarcs after this bisect on an AYN Thor (each build listed in the launch log's `DM_ROMFS_OVERLAY`, so the mod was really loaded). These tests ran on V0.0.1 builds installed next to two other mods:
 
 | Build | Result |
 | --- | --- |
@@ -39,11 +34,11 @@ Earlier builds left out the UnitIcon models and the other `Message/` sarcs after
 
 The Message crash was a size cap, not a bad file. Another mod was first in the list, so its size table capped every file (see "Peanuts mod order" below): Combined's table caps `System_USen` at 350,816 bytes, and the port's file is 353,624. With Jubbsticks first and its size table covering every port message file, all of the port's `Message/` sarcs load the island on Peanuts 0.1.8, so they are back in.
 
-The UnitIcon models crashed even then. These are the inventory icons of the port's new fruit and gems: 25 models: 17 new ones, and 8 that replace vanilla icons (seven fruit and the pansy petal). With them in, Peanuts 0.1.8 crashed at the title about 18 s in (`CRASH sig=11 addr=0 pc=sdk+0x582b2c lr=main+0x151ba24`), and without them the island loaded. Raising their size entries to twice the decompressed size plus 64 KB didn't help. The crash address is the same NULL memset after a failed allocation as Combined's oak crash below. A build that ships vanilla 3.0.3's own Pansy UnitIcon bytes and no new icon names loads the island, so the crash points at the 17 new icon models rather than at a replaced vanilla icon. One guess was that the game's fixed 22 MiB `GfxDrawArrayHeap` fills up. A code patch that raises it to 64 MiB applied but still crashed at the title (`pc=sdk+0x582b2c`, with the caller now at `lr=main+0x14c39d0`). That is an allocation from its parent heap, "Scene": the extra 42 MiB came out of Scene, and Scene ran out instead. The fix that works grows the draw-array heap and the root of its heap chain, cScene, by the same amount, so Scene keeps its free room and the extra memory comes out of cOthers, which leaves about 136 MB unused. That is the memory fix, a separate code mod (`acnh-memory-fix-peanuts.zip`, +42 MiB) that the patcher page saves next to the mod. It is described in full in [acnh-qol-peanuts' PORT.md](https://github.com/catmona/acnh-qol-peanuts/blob/main/docs/PORT.md#the-memory-fix). With the fix installed, the page ships all 25 icons. With its box unticked, the page leaves them out as before, and the items show without their own icons.
+The UnitIcon models crashed even then. These are the inventory icons of the port's new fruit and gems: 25 models: 17 new ones, and 8 that replace vanilla icons (seven fruit and the pansy petal). With them in, Peanuts 0.1.8 crashed at the title about 18 s in (`CRASH sig=11 addr=0 pc=sdk+0x582b2c lr=main+0x151ba24`), and without them the island loaded. Raising their size entries to twice the decompressed size plus 64 KB didn't help. The crash address is the same NULL memset after a failed allocation as Combined's oak crash below. A build that ships vanilla 3.0.3's own Pansy UnitIcon bytes and no new icon names loads the island, so the crash points at the 17 new icon models rather than at a replaced vanilla icon. One guess was that the game's fixed 22 MiB `GfxDrawArrayHeap` fills up. A code patch that raises it to 64 MiB applied but still crashed at the title (`pc=sdk+0x582b2c`, with the caller now at `lr=main+0x14c39d0`). That is an allocation from its parent heap, "Scene": the extra 42 MiB came out of Scene, and Scene ran out instead. The fix that works grows the draw-array heap and the root of its heap chain, cScene, by the same amount, so Scene keeps its free room and the extra memory comes out of cOthers, which leaves about 136 MB unused. That is the memory fix, a separate code mod (`acnh-memory-fix-peanuts.zip`, +42 MiB) that the patcher page saves next to the mod. It is described in full in [acnh-qol-peanuts' PORT.md](https://github.com/catmona/acnh-qol-peanuts/blob/main/docs/PORT.md#the-memory-fix). With the fix installed, all 25 icons work, so the page ships them and always makes the fix with this mod.
 
 ### EventFlow
 
-The port's `EventFlow/Info/EventFlowInfoProduct.byml` is a 2.x-era file that also changes existing 3.0.3 entries, so the build uses a merged one: vanilla 3.0.3 plus only the port's new entries (`tools/add_eventflow.py`). The earlier boot crash at `main+0x1ae078c` was the size table, not the byml. Combined was first in the mod list then, and its table capped `EventFlowInfoProduct.byml` at 274,944 bytes, below the merged file's 277,392. With Jubbsticks first and the size tables max-merged, the EventFlow build boots and loads the island on Peanuts 0.1.8. It is in the release.
+V0.0.2's `EventFlow/Info/EventFlowInfoProduct.byml` is a 2.x-era file that also changes existing 3.0.3 entries, so earlier builds used a merged one: vanilla 3.0.3 plus only the port's new entries. The earlier boot crash at `main+0x1ae078c` was the size table, not the byml. Combined was first in the mod list then, and its table capped `EventFlowInfoProduct.byml` at 274,944 bytes, below the merged file's 277,392. With Jubbsticks first and the size tables max-merged, that build booted and loaded the island on Peanuts 0.1.8. The page now ships the port's own file.
 
 ### Peanuts mod order and size tables
 
@@ -59,7 +54,7 @@ The 6 ItemOutfitInfo rows are Combined's unbreakable gold tools. They come from 
 
 ## Audit of the port against vanilla 3.0.3
 
-`tools/audit_port.py` compares every file of the port's V0.0.2 release (the same bytes as its `main` on Nov 25, 2026) with vanilla 3.0.3 and with Jubbsticks 1.0.11, the 2.0-era original. Of the port's 1,335 romfs files, 123 replace a vanilla file:
+`tools/audit_port.py` compares every file of the port's V0.0.2 release with vanilla 3.0.3 and with Jubbsticks 1.0.11, the 2.0-era original. The counts and findings below are V0.0.2's; the list at the top says what the port has fixed since. Of its 1,335 romfs files, 123 replace a vanilla file:
 
 | Folder | Replaces vanilla | Byte-identical to 1.0.11 |
 | --- | --- | --- |
@@ -67,7 +62,7 @@ The 6 ItemOutfitInfo rows are Combined's unbreakable gold tools. They come from 
 | `Model/` | 40 | 40 |
 | `Param/` | 18 | 17 |
 | `Bcsv/` | 13 | 0 |
-| `Message/` | 18 | 0 (the build puts back their missing labels, see above) |
+| `Message/` | 18 | 0 (see Messages below) |
 | `Stage/`, `System/` | 2 | 0 |
 
 A second pass also compared each replaced file with vanilla 1.0.0:
@@ -101,9 +96,9 @@ The table lists the strings in vanilla 3.0.3 that the port's copy lacks:
 | `Tutorials_Prologue_Tkk` (new game) | `AoC`, `BundledEdition`, `VersionUp`, and 21 more strings | K.K.'s dream at launch (`Tkk30Dream`) |
 | `Obj_RcoMachine_MileExchange`, `SNPC_doc_52_CommuneIsland` | 8 and 12 events | Nook Miles rewards, the Mole flag |
 
-`Tutorials_Prologue_Tkk`: 1.0.0's file has none of `AoC`, `BundledEdition` or `VersionUp`. 1.0.11's file has 18 strings that 1.0.0's lacks. So Jubbsticks started from a file newer than 1.0.0, and these three came with a later update: they aren't a pre-2.0 leftover. Without a 2.0 dump we can't tell whether Jubbsticks cut them or their base file never had them. Their own change (K.K.'s dream) doesn't touch that part of the file. K.K. said nothing at launch in the port because his dream's lines, `SP_tkk_dream` 300 and 333, were among the labels the port lost. The build puts them back.
+`Tutorials_Prologue_Tkk`: 1.0.0's file has none of `AoC`, `BundledEdition` or `VersionUp`. 1.0.11's file has 18 strings that 1.0.0's lacks. So Jubbsticks started from a file newer than 1.0.0, and these three came with a later update: they aren't a pre-2.0 leftover. Without a 2.0 dump we can't tell whether Jubbsticks cut them or their base file never had them. Their own change (K.K.'s dream) doesn't touch that part of the file. K.K. said nothing at launch in the port because his dream's lines, `SP_tkk_dream` 300 and 333, were among the labels the port lost. Earlier builds put them back, and port PR #1 does now.
 
-The build replaces only `Ftr_Working` (optional, by leaving the port's file out). The other flows still need a merge of 3.0.3's logic with Jubbsticks' change, which is left for later.
+Earlier builds could replace only `Ftr_Working` (optional, by leaving the port's file out); the page replaces none. The flows still need a merge of 3.0.3's logic with Jubbsticks' change, which is left for later.
 
 This compares strings, not flow logic. A missing string shows that the port's file is older than 3.0.3, but how much each loss matters in play still needs checking in game.
 
@@ -126,16 +121,16 @@ Every vanilla 3.0.3 row id is still there, and every row 3.0 added is kept. In e
   - All 97 recipes the port adds have 9800 in that field.
   - That may be the hotel-delivery exclusion the README describes. We haven't confirmed which field controls hotel requests.
 
-What the port lost or broke on the way. The Peanuts build fixes each one marked "fixed", checked against the data but not yet in game:
+What the port had lost or broken by V0.0.2. "Fixed then" marks what the earlier builds fixed, checked against the data but not in game. The page fixes none of it now:
 
-- **Recipes 1226 and 1227 make the wrong items.** Fixed: they make 881 and 886 again.
+- **Recipes 1226 and 1227 make the wrong items.** Fixed then: they made 881 and 886 again.
   - In 1.0.11 they made the woodland arch and the woodland shrub (items 883 and 884).
   - 3.0 uses 883 and 884 for the apple and orange souvenir bags. The port moved the two furniture items to 881 and 886, but the recipes still point at 883 and 884, so crafting them should give a souvenir bag.
   - Items 881 and 886 have no recipe and no name.
   - The port still ships the names `Ftr_00883` "woodland arch" and `Ftr_00884` "woodland shrub", which nothing uses.
-- **The green leaf balloon is gone.** 1.0.11's `ToolBalloonLeafGreen` was item 14540, which is 3.0's Nook Inc. balloon. The port kept 3.0's item but not its name: `Balloon_14540` reads "green leaf balloon" in USen and EUen. Fixed: it reads 3.0.3's "Nook Inc. balloon". The leaf balloon itself stays gone, since 3.0 owns its id.
-- **The petaltail dragonfly furniture** moved from 1030 and 1031 (now villager photos) to 1028 and 1034, with no names. Fixed: 1028 gets 1.0.11's name, and 1034, a model, gets a model name (see below).
-- **Pansies: 20 items lost their field objects.** Fixed: the build adds back 1.0.11's 21 rows (the keys neither the port nor 3.0.3 uses), with the same layout as the port's table.
+- **The green leaf balloon is gone.** 1.0.11's `ToolBalloonLeafGreen` was item 14540, which is 3.0's Nook Inc. balloon. The port kept 3.0's item but not its name: `Balloon_14540` reads "green leaf balloon" in USen and EUen. Fixed then: it read 3.0.3's "Nook Inc. balloon". The leaf balloon itself stays gone, since 3.0 owns its id.
+- **The petaltail dragonfly furniture** moved from 1030 and 1031 (now villager photos) to 1028 and 1034, with no names. Fixed then: 1028 got 1.0.11's name, and 1034, a model, got a model name (see below).
+- **Pansies: 20 items lost their field objects.** Fixed then: the build added back 1.0.11's 21 rows (the keys neither the port nor 3.0.3 uses), with the same layout as the port's table.
   - `FgMainParam` drops 1.0.11's 21 rows 59977-59999.
   - The planted pansies (`PltPansyRed1`-`3`, `Blue1`-`3`, `Pink1`-`3`, `Coral1`-`3`) are still in `ItemParam`, with nothing to place.
   - So are the flowers `FlwPansyCoral`, `FlwPansyPink`, `FlwPansyRedHybrid`, `FlwPansyBlueHybrid` and `FlwPansyCoralHybrid`.
@@ -146,20 +141,20 @@ What the port lost or broke on the way. The Peanuts build fixes each one marked 
   - the petal pieces (1028, 1034) and the woodland pieces (881, 886)
   - `ToolRadarSzo` (2001) and the Roost board (11111)
 
-  1.0.11 had names for 6 of the critters: barbel steed, eel, black widow, house centipede, luna moth, petaltail dragonfly. The first five are fish and insects whose names the port has; the unnamed ids are their models (`Kind_FishToy`, `Kind_InsectToy`). Fixed: 881 and 886 take the port's unused "woodland arch" and "woodland shrub", and the six models get the critter's name plus " model", as vanilla names its models. Still unnamed: the white modern bed (1000, no text anywhere to take it from), and `ToolRadarSzo` (2001) and the Roost board (11111), which the player never holds.
+  1.0.11 had names for 6 of the critters: barbel steed, eel, black widow, house centipede, luna moth, petaltail dragonfly. The first five are fish and insects whose names the port has; the unnamed ids are their models (`Kind_FishToy`, `Kind_InsectToy`). Fixed then: 881 and 886 took the port's unused "woodland arch" and "woodland shrub", and the six models got the critter's name plus " model", as vanilla names its models. Still unnamed: the white modern bed (1000, no text anywhere to take it from), and `ToolRadarSzo` (2001) and the Roost board (11111), which the player never holds.
 - Item 1935 (perfect-apple fritter): its icon columns are fine, but the port ships no `Layout_FtrIcon_` or `Layout_CookingIcon_` model for it, and neither did 1.0.11. It needs new art, so it is left.
 - No recipe points at an item that doesn't exist. This checked each recipe's result and its 4 material fields.
 
 ### Messages
 
-`LayoutMsg` and `TalkNNpc` match 3.0.3 label for label. `String_USen` and `String_EUen` lack 79 of 3.0.3's labels. 75 of them are vanilla item names: the Dream tools, the Cloud Island kits, `ToolMegaphoneMike`, the garden items. The Peanuts build puts them back. The port as released shows those names blank.
+`LayoutMsg` and `TalkNNpc` match 3.0.3 label for label. `String_USen` and `String_EUen` lack 79 of 3.0.3's labels. 75 of them are vanilla item names: the Dream tools, the Cloud Island kits, `ToolMegaphoneMike`, the garden items. V0.0.2 shows those names blank. Earlier builds put them back, and port PR #1 does now.
 
 In these labels the port has 1.0.11's text instead of 3.0.3's:
 
 - `TalkFtr` `FTR_WorkingTable:023`, `024`, `024_a`, `024_b`:
   - 3.0 reuses these labels for the Pocket Camp and Paradise Planning phone cases ("Customize it!" / "Not right now.").
   - The port has Jubbsticks' bait lines instead ("I made a bunch of fish bait!", "Craft more!" / "All done for now.").
-  - The optional 3.0.3 workbench fix sets them back to 3.0.3's, with the flow.
+  - The earlier builds' optional 3.0.3 workbench fix set them back to 3.0.3's, with the flow.
 - `pge/SP_pge_02_Takeout`: about 19 lines of Brewster's coffee to go, reworded in 3.0. Matches the port's 2.0 flow.
 - `SP_slo_02_Commune:098`, and Leif's mail `SNpc_slo:201` (3.0 changed its sign-off).
 - `String_EUen` has US names in the EU English file: Spork for Crackle, Jacob for Jakey, pachy, sparkling cider, aloha edition. Cosmetic.
@@ -184,7 +179,7 @@ In these labels the port has 1.0.11's text instead of 3.0.3's:
 - `AI_NPC_CommuneDud`, `AI_NPC_Fsl_Commune`, `AI_NPC_Mob_Commune`, `AI_NPC_Mol_Commune`
 - `SNPC_fsl_02_Commune`, `SNPC_mob_01_Commune`, `SNPC_spn_19_Commune_AltFslFlows`
 
-The Peanuts build adds the names of all the port's new flows.
+Earlier builds added the names of all the port's new flows.
 
 This table shows which size table has an entry for each port file:
 
@@ -199,11 +194,11 @@ This table shows which size table has an entry for each port file:
 - Vanilla's table has no entries for Param or Stage byml at all, so those 19 are normal.
 - The 529 new models with no entry load in the full build (see the checks below), so the game's fallback copes with them.
 - The 7 Roost textures are the only loose texture files in the port, and the main suspect for the Roost crash.
-- The port's own table lacks 23 entries that 3.0.3's has, among them `PltFlwPansy`, `PltFlwRose`, `ToolAxeFirst`, `ToolNetWood` and `IdrMuseumCafe00`. It also has 31 sizes smaller than 3.0.3's. That only matters for the port as released: the Peanuts build starts from 3.0.3's table.
+- The port's own table lacks 23 entries that 3.0.3's has, among them `PltFlwPansy`, `PltFlwRose`, `ToolAxeFirst`, `ToolNetWood` and `IdrMuseumCafe00`. It also has 31 sizes smaller than 3.0.3's. That matters where this table is used as it is. The page's own table starts from 3.0.3's when QoL is picked.
 
 ### The port's README and FileInfo
 
-- **Bait bulk crafting.** The README says "I did attempt to port the changes over". But `Ftr_Working` is 1.0.11's file, byte for byte, so 3.0's multi-craft and crafting from storage are gone at the workbench. The build's optional workbench fix brings 3.0.3's back.
+- **Bait bulk crafting.** The README says "I did attempt to port the changes over". But `Ftr_Working` is 1.0.11's file, byte for byte, so 3.0's multi-craft and crafting from storage are gone at the workbench. The earlier builds' optional workbench fix brought 3.0.3's back.
 - **Hotel DIY deliveries.** The README says the mod's recipes were "manually flagged". See `RecipeCraftParam` above: plausible, not confirmed.
 - **The "Removed" list** names only the 2 bananas and the translations. It leaves out the green leaf balloon, the pansy field objects, the woodland arch and shrub recipes, and the critter names.
 - **`FileInfo.md`** names `SNPC_rcm_11_BuyDIYBook`, but the file is `SNPC_rcm_11_BuyDIYbook.bfevfl`. It lists only 2 of the 31 replaced flows as conflicts.
@@ -252,7 +247,8 @@ Fixing that needs a merged flow.
 
 ## Checks that were run
 
-- `node test/run.mjs` on V0.0.4: 1,336 files, 51.0 MB. The size table rebuilt over it raises 54 entries, adds 5 and removes 677 geometry entries; every sized file fits (84 sized, 1,231 geometry models left to the game, 0 fails).
+- `node test/run.mjs` on the V0.0.5 release (Nov 26, 2026): 1,336 files, 54.4 MB. The size table rebuilt over it raises 54 entries, adds 5 and removes 677 geometry entries; every sized file fits (84 sized, 1,231 geometry models left to the game, 0 fails).
+- The same on the port's `main` at `c711fe5`, with PR #1, zipped from git: 1,336 files, 50.8 MB, the same table counts and 0 fails. Neither run was in game.
 
 Earlier builds (V0.0.2 with the old fixes), kept for the memory-fix finding:
 
