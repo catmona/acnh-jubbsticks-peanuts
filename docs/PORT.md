@@ -4,7 +4,7 @@
 >
 > - V0.0.3 and V0.0.4: recipes 1226/1227 (they made items 883/884) and the pansies without field objects.
 > - V0.0.5: the missing space before item names, 76 broken message labels, FgMainParam's size entry and the file alignment.
-> - [Port PR #1](https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port/pull/1), merged as `c711fe5` on Nov 26, 2026: the message labels. It repairs the 67 still cut short, puts back 1,477 labels from 1.0.11 and the 3.0.3 labels the port lacked, names 9 unnamed items and gives the Nook Inc. balloon its name back. It was merged after V0.0.5, so it reaches players with a later release.
+> - [Port PR #1](https://github.com/dragonloverlord/Unnofficial-Jubbsticks-Additions-Port/pull/1), merged as `c711fe5` on Nov 26, 2026: the message labels. It repairs the 67 still cut short, puts back 1,477 labels from 1.0.11 and the 3.0.3 labels the port lacked, names 9 unnamed items and gives the Nook Inc. balloon its name back. It shipped in V0.0.6 (Nov 26, 2026).
 
 # How the Peanuts build is made
 
