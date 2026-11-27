@@ -249,6 +249,7 @@ Fixing that needs a merged flow.
 
 - `node test/run.mjs` on the V0.0.5 release (Nov 26, 2026): 1,336 files, 54.4 MB. The size table rebuilt over it raises 54 entries, adds 5 and removes 677 geometry entries; every sized file fits (84 sized, 1,231 geometry models left to the game, 0 fails).
 - The same on the port's `main` at `c711fe5`, with PR #1, zipped from git: 1,336 files, 50.8 MB, the same table counts and 0 fails. Neither run was in game.
+- `node test/run.mjs` on the V0.0.6 release (Nov 26, 2026), which has PR #1: 1,336 files, 50.8 MB, the same table counts and 0 fails. In headless Chrome both pages, served locally, made the same four zips from it with QoL. Not tried in game.
 
 Earlier builds (V0.0.2 with the old fixes), kept for the memory-fix finding:
 
