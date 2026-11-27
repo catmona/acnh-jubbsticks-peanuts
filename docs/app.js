@@ -250,246 +250,24 @@ function writeZip(entries) {   // [name, bytes], stored (no compression)
   return new Blob([...parts, ...dir, new Uint8Array(e.buffer)], { type: 'application/zip' });
 }
 
-const hex = b => Array.from(new Uint8Array(b), x => x.toString(16).padStart(2, '0')).join('');
-const sha256 = async u => hex(await crypto.subtle.digest('SHA-256', u));
 const unb64 = s => Uint8Array.from(atob(s), ch => ch.charCodeAt(0));
 const cat = parts => { const o = new Uint8Array(parts.reduce((a, p) => a + p.length, 0)); let at = 0; for (const p of parts) { o.set(p, at); at += p.length; } return o; };
 const u32 = n => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b; };
 const utf8 = s => new TextEncoder().encode(s);
 
-// zstd: fzstd decodes; we write uncompressed (raw-block) frames, which any zstd decoder accepts
-function zstdRaw(d) {
-  const f = new Uint8Array(13); f.set([0x28, 0xB5, 0x2F, 0xFD, 0xE0]); new DataView(f.buffer).setBigUint64(5, BigInt(d.length), true);
-  const parts = [f];
-  for (let o = 0; o < d.length; o += 131072) {
-    const n = Math.min(131072, d.length - o), last = o + n >= d.length ? 1 : 0, h = (n << 3) | last;
-    parts.push(new Uint8Array([h & 255, (h >> 8) & 255, (h >> 16) & 255]), d.subarray(o, o + n));
-  }
-  return cat(parts);
-}
-function yaz0Raw(d) {   // store-only Yaz0 (all literals)
-  const out = new Uint8Array(16 + d.length + Math.ceil(d.length / 8)); out.set([0x59, 0x61, 0x7a, 0x30]);
-  new DataView(out.buffer).setUint32(4, d.length, false); let o = 16;
-  for (let i = 0; i < d.length; i += 8) { const n = Math.min(8, d.length - i); out[o++] = (0xff << (8 - n)) & 0xff; out.set(d.subarray(i, i + n), o); o += n; }
-  return out.subarray(0, o);
-}
-
-function yaz0Dec(b) {
-  if (hex(b.subarray(0, 4)) !== '59617a30') throw new Error('not a Yaz0 file');
-  const n = new DataView(b.buffer, b.byteOffset, b.byteLength).getUint32(4, false), out = new Uint8Array(n);
-  let i = 16, o = 0, code = 0, bits = 0;
-  while (o < n) {
-    if (!bits) { code = b[i++]; bits = 8; }
-    if (code & 0x80) out[o++] = b[i++];
-    else {
-      const b1 = b[i++], b2 = b[i++]; let len = b1 >> 4; const src = o - (((b1 & 15) << 8) | b2) - 1;
-      len = len ? len + 2 : b[i++] + 18;
-      for (let k = 0; k < len && o < n; k++) out[o + k] = out[src + k];
-      o += Math.min(len, n - o);
-    }
-    code = (code << 1) & 0xff; bits--;
-  }
-  return out;
-}
-// RSTC table: 'RSTC', u32 count, u32 version, count x (u32 crc, u32 size, u32 0) sorted by crc, then a tail
-function rstcParse(t) {
-  const v = new DataView(t.buffer, t.byteOffset, t.byteLength); if (hex(t.subarray(0, 4)) !== '52535443') throw new Error('not a size table');
-  const n = v.getUint32(4, true), ents = new Map();
-  for (let i = 0; i < n; i++) ents.set(v.getUint32(12 + 12 * i, true), [v.getUint32(16 + 12 * i, true), v.getUint32(20 + 12 * i, true)]);
-  return { ver: v.getUint32(8, true), ents, tail: t.subarray(12 + 12 * n) };
-}
-// Our table, with every size raised to the other mod's where that is larger, and its entries added
-function rstcMerge(ours, theirs) {
-  const A = rstcParse(ours), B = rstcParse(theirs); let raised = 0, added = 0;
-  if (A.ver !== B.ver) throw new Error('Its size table is version ' + B.ver + ', ours is ' + A.ver + '.');
-  for (const [k, e] of B.ents) {
-    const a = A.ents.get(k);
-    if (!a) { A.ents.set(k, e); added++; } else if (e[0] > a[0]) { a[0] = e[0]; raised++; }
-  }
-  const keys = [...A.ents.keys()].sort((x, y) => x - y), out = new Uint8Array(12 + 12 * keys.length + A.tail.length), v = new DataView(out.buffer);
-  out.set([0x52, 0x53, 0x54, 0x43]); v.setUint32(4, keys.length, true); v.setUint32(8, A.ver, true);
-  keys.forEach((k, i) => { const e = A.ents.get(k); v.setUint32(12 + 12 * i, k, true); v.setUint32(16 + 12 * i, e[0], true); v.setUint32(20 + 12 * i, e[1], true); });
-  out.set(A.tail, 12 + 12 * keys.length);
-  return { tab: out, raised, added };
-}
-
-// SARC
-function sarcParse(b) {
-  const v = new DataView(b.buffer, b.byteOffset, b.byteLength); if (hex(b.subarray(0, 4)) !== '53415243') throw new Error('not a SARC');
-  const doff = v.getUint32(0xC, true), n = v.getUint16(0x1A, true), so = 0x20 + 16 * n, nt = so + 8, dec = new TextDecoder(), ents = [];
-  for (let i = 0; i < n; i++) {
-    const h = v.getUint32(0x20 + 16 * i, true), attr = v.getUint32(0x24 + 16 * i, true), s = v.getUint32(0x28 + 16 * i, true), e = v.getUint32(0x2C + 16 * i, true);
-    let name = null; if (attr >>> 24) { const o = nt + (attr & 0xffffff) * 4; let z = o; while (b[z]) z++; name = dec.decode(b.subarray(o, z)); }
-    ents.push({ h, name, s, e, data: b.subarray(doff + s, doff + e) });
-  }
-  return { ents, doff, n };
-}
-function sarcReplace(b, repl) {
-  const { ents, doff } = sarcParse(b), head = b.slice(0, doff), hv = new DataView(head.buffer);
-  let al = 1; while (al < 0x2000 && ents.every(e => e.s % (al * 2) === 0)) al *= 2; al = Math.max(al, 4);
-  const parts = []; let len = 0;
-  ents.forEach((e, i) => {
-    const d = repl.get(e.name) || e.data; while (len % al) { parts.push(new Uint8Array(1)); len++; }
-    hv.setUint32(0x28 + 16 * i, len, true); hv.setUint32(0x2C + 16 * i, len + d.length, true); parts.push(d); len += d.length;
-  });
-  const out = cat([head, ...parts]); new DataView(out.buffer).setUint32(8, out.length, true); return out;
-}
-
-// MSBT: add or replace labels
-function msbtEdit(b, add, set) {
-  const v = new DataView(b.buffer, b.byteOffset, b.byteLength), n = v.getUint16(0xE, true), secs = []; let o = 0x20;
-  for (let i = 0; i < n; i++) { const sz = v.getUint32(o + 4, true); secs.push([b.subarray(o, o + 4), b.subarray(o + 16, o + 16 + sz)]); o = (o + 16 + sz + 15) & ~15; }
-  const find = m => secs.find(s => String.fromCharCode(...s[0]) === m);
-  const L = find('LBL1')[1], T = find('TXT2')[1], lv = new DataView(L.buffer, L.byteOffset, L.byteLength), tv = new DataView(T.buffer, T.byteOffset, T.byteLength);
-  const g = lv.getUint32(0, true), labels = [];
-  for (let i = 0; i < g; i++) {
-    const c = lv.getUint32(4 + 8 * i, true); let p = lv.getUint32(8 + 8 * i, true);
-    for (let k = 0; k < c; k++) { const ln = L[p]; labels.push([new TextDecoder().decode(L.subarray(p + 1, p + 1 + ln)), lv.getUint32(p + 1 + ln, true)]); p += 5 + ln; }
-  }
-  const cnt = tv.getUint32(0, true), offs = [...Array(cnt)].map((_, i) => tv.getUint32(4 + 4 * i, true)).concat([T.length]);
-  const texts = [...Array(cnt)].map((_, i) => T.subarray(offs[i], offs[i + 1]));
-  const idx = new Map(labels);
-  for (const [name, t] of set) { if (!idx.has(name)) throw new Error('label missing: ' + name); texts[idx.get(name)] = unb64(t); }
-  const A = find('ATR1'), es = A ? new DataView(A[1].buffer, A[1].byteOffset, A[1].byteLength).getUint32(4, true) : 0, attrs = [];
-  for (const [name, t, a] of add) {   // a: the label's ATR1 entry, for files whose entries are not 0 bytes
-    if (idx.has(name)) throw new Error('label already there: ' + name);
-    const ab = a ? unb64(a) : new Uint8Array(0); if (ab.length !== es) throw new Error('attribute size for ' + name);
-    idx.set(name, texts.length); texts.push(unb64(t)); attrs.push(ab);
-  }
-  if (attrs.length && es && A[1].length !== 8 + es * cnt) throw new Error('ATR1 has a string pool; not handled');
-  const hashg = nm => { let h = 0; for (const ch of utf8(nm)) h = (Math.imul(h, 0x492) + ch) >>> 0; return h % g; };
-  const groups = [...Array(g)].map(() => []);
-  for (const [nm, i] of [...idx].sort((a, c) => a[1] - c[1])) groups[hashg(nm)].push([nm, i]);
-  const body = [], head = [u32(g)]; let off = 4 + 8 * g;
-  for (const gr of groups) {
-    head.push(u32(gr.length), u32(off));
-    for (const [nm, i] of gr) { const nb = utf8(nm), e = cat([new Uint8Array([nb.length]), nb, u32(i)]); body.push(e); off += e.length; }
-  }
-  const newL = cat([...head, ...body]); let to = 4 + 4 * texts.length; const toffs = [];
-  for (const t of texts) { toffs.push(to); to += t.length; }
-  const newT = cat([u32(texts.length), ...toffs.map(u32), ...texts]);
-  const out = [b.slice(0, 0x20)]; let len = 0x20;
-  for (const [mg, d0] of secs) {
-    const m = String.fromCharCode(...mg), d = m === 'LBL1' ? newL : m === 'TXT2' ? newT : m === 'ATR1' ? cat([u32(texts.length), d0.subarray(4), ...attrs]) : d0;
-    const hdr = new Uint8Array(16); hdr.set(mg); new DataView(hdr.buffer).setUint32(4, d.length, true); out.push(hdr, d); len += 16 + d.length;
-    const pad = (16 - (len % 16)) % 16; if (pad) { out.push(new Uint8Array(pad).fill(0xab)); len += pad; }
-  }
-  const r = cat(out); new DataView(r.buffer).setUint32(0x12, r.length, true); return r;
-}
-
-async function inflateRaw(u) { return new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()); }
-
-// BYML v3 (strings, arrays, dicts only: that is all EventFlowInfoProduct.byml holds)
-function bymlRead(b) {
-  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength), td = new TextDecoder();
-  if (b[0] !== 0x59 || b[1] !== 0x42) throw new Error('not a BYML');
-  const ko = dv.getUint32(4, true), so = dv.getUint32(8, true), ro = dv.getUint32(12, true);
-  const tab = o => { const n = dv.getUint32(o, true) >>> 8, r = []; for (let i = 0; i < n; i++) { const s = o + dv.getUint32(o + 4 + 4 * i, true); let e = s; while (b[e]) e++; r.push(td.decode(b.subarray(s, e))); } return r; };
-  const K = tab(ko), S = tab(so);
-  const val = (t, v) => { if (t === 0xA0) return S[v]; if (t === 0xC0 || t === 0xC1) return node(v); throw new Error('BYML value type 0x' + t.toString(16) + ' is not handled'); };
-  const node = o => {
-    const t = b[o], n = dv.getUint32(o, true) >>> 8;
-    if (t === 0xC0) { const vo = (o + 4 + n + 3) & ~3; return Array.from({ length: n }, (_, i) => val(b[o + 4 + i], dv.getUint32(vo + 4 * i, true))); }
-    if (t === 0xC1) { const d = {}; for (let i = 0; i < n; i++) { const e = o + 4 + 8 * i; d[K[dv.getUint32(e, true) & 0xFFFFFF]] = val(b[e + 3], dv.getUint32(e + 4, true)); } return d; }
-    throw new Error('BYML node type 0x' + t.toString(16) + ' is not handled');
-  };
-  return node(ro);
-}
-function bymlWrite(root) {
-  const keys = new Set(), strs = new Set();
-  const scan = x => { if (Array.isArray(x)) x.forEach(scan); else if (x && typeof x === 'object') for (const k in x) { keys.add(k); scan(x[k]); } else strs.add(x); };
-  scan(root);
-  const K = [...keys].sort(), S = [...strs].sort(), ki = new Map(K.map((k, i) => [k, i])), si = new Map(S.map((s, i) => [s, i]));
-  const table = L => {
-    const offs = [], body = []; let off = 4 + 4 * (L.length + 1);
-    for (const s of L) { const e = cat([utf8(s), new Uint8Array(1)]); offs.push(off); body.push(e); off += e.length; }
-    offs.push(off); const o = cat([u32(0xC2 | (L.length << 8)), ...offs.map(u32), ...body]);
-    return cat([o, new Uint8Array((4 - o.length % 4) % 4)]);
-  };
-  const kt = table(K), st = table(S);
-  let out = new Uint8Array(1 << 20 | 0), len = 16, dv;
-  const grow = n => { if (len + n > out.length) { const o2 = new Uint8Array(Math.max(out.length * 2, len + n)); o2.set(out); out = o2; } dv = new DataView(out.buffer); };
-  grow(0); const ko = len; grow(kt.length); out.set(kt, len); len += kt.length; const so = len; grow(st.length); out.set(st, len); len += st.length;
-  const node = x => {
-    const isD = !Array.isArray(x), items = isD ? Object.entries(x).sort((a, b) => ki.get(a[0]) - ki.get(b[0])) : x.map((v, i) => [i, v]), n = items.length;
-    const size = isD ? 4 + 8 * n : 4 + n + ((4 - (4 + n) % 4) % 4) + 4 * n, pos = len; grow(size); len += size;
-    const vals = items.map(([k, v]) => typeof v === 'string' ? [k, 0xA0, si.get(v)] : [k, Array.isArray(v) ? 0xC0 : 0xC1, node(v)]);
-    dv = new DataView(out.buffer);
-    if (isD) { dv.setUint32(pos, 0xC1 | (n << 8), true); vals.forEach(([k, t, v], i) => { const e = pos + 4 + 8 * i; dv.setUint32(e, ki.get(k), true); out[e + 3] = t; dv.setUint32(e + 4, v, true); }); }
-    else { dv.setUint32(pos, 0xC0 | (n << 8), true); const vo = pos + 4 + n + ((4 - (4 + n) % 4) % 4); vals.forEach(([k, t, v], i) => { out[pos + 4 + i] = t; dv.setUint32(vo + 4 * i, v, true); }); }
-    return pos;
-  };
-  const ro = node(root); dv = new DataView(out.buffer);
-  out[0] = 0x59; out[1] = 0x42; dv.setUint16(2, 3, true); dv.setUint32(4, ko, true); dv.setUint32(8, so, true); dv.setUint32(12, ro, true);
-  return out.slice(0, len);
-}
-
-async function build(modBytes, patch, zstd, others = [], fix = true) {   // others: [{ name, bytes }] other mods' zips; fix: the memory fix goes in too
-  if (patch.format !== 1 || patch.tid !== TID) throw new Error('That is not the jub-port-patch.json file.');
+// Any release of the port: the Atmosphere .7z or zip with romfs/Bcsv/ItemParam.bcsv. Every file under that romfs goes out as the port ships
+// it, size table included, under atmosphere/contents/<tid>/romfs/. The page's size table comes from acnh-rstb-fixer (docs/rstb), not from here.
+async function build(modBytes) {
   const m = modBytes, is7z = m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C;
   if (!is7z && !(m[0] === 0x50 && m[1] === 0x4B)) throw new Error("That is not the port's download. Pick the Atmosphere .7z from the port's Releases.");
   const files = is7z ? await read7z(m) : await readZip(m);
   const key = [...files.keys()].find(n => n.endsWith('romfs/Bcsv/ItemParam.bcsv'));
   if (!key) throw new Error('No romfs/Bcsv/ItemParam.bcsv in that file. Pick the Atmosphere download of the port (not the Emulator one).');
-  const base = key.slice(0, -'Bcsv/ItemParam.bcsv'.length);
-  const get = async r => { const f = files.get(base + r); if (!f) throw new Error(r + ' is missing from that download.'); return f(); };
-  const done = new Map();
-  for (const [r, p] of Object.entries(patch.bcsv)) {
-    const d = (await get(r)).slice();
-    if (await sha256(d) !== p.in_sha256) throw new Error(r + ' is not the one from ' + patch.release + '. The patch only fits that release.');
-    for (const [off, b] of p.edits) d.set(unb64(b), off);
-    if (await sha256(d) !== p.out_sha256) throw new Error(r + ' came out wrong. Please open an issue.');
-    done.set(r, d);
-  }
-  // Message sarcs: put back the 3.0.3 labels the port's copies lack ('strings' is String_USen, 'messages' the others)
-  for (const S of [patch.strings, ...(patch.messages || [])]) {
-    const plain = zstd(await get(S.file));
-    if (await sha256(plain) !== S.in_content_sha256) throw new Error(S.file + ' is not the one from ' + patch.release + '.');
-    const sar = sarcParse(plain), repl = new Map();
-    for (const [name, e] of Object.entries(S.msbt)) {
-      const ent = sar.ents.find(x => x.name === name); if (!ent) throw new Error('missing ' + name);
-      repl.set(name, msbtEdit(ent.data, e.add, e.set));
-    }
-    const nsar = sarcReplace(plain, repl);
-    if (await sha256(nsar) !== S.out_content_sha256) throw new Error(S.file + ' came out wrong. Please open an issue.');
-    done.set(S.file, zstdRaw(nsar));
-  }
-  const R = patch.rstb, tab = cat([utf8('RSTC'), u32(R.count), await inflateRaw(unb64(R.data))]);
-  if (await sha256(tab) !== R.content_sha256) throw new Error('The size table came out wrong. Please open an issue.');
-  // Peanuts takes a file from the first-installed mod, so this table must also allow every size the other mods raised
-  const RS = 'System/Resource/ResourceSizeTable.srsizetable', merged = [];
-  let mt = tab;
-  for (const o of others) {
-    const ob = o.bytes, o7 = ob[0] === 0x37 && ob[1] === 0x7A, of = o7 ? await read7z(ob) : await readZip(ob);
-    const k = [...of.keys()].find(n => n.endsWith(RS));
-    if (!k) { merged.push(o.name + ': no size table, skipped'); continue; }
-    let t; try { t = yaz0Dec(await of.get(k)()); } catch (e) { throw new Error(o.name + ': ' + e.message); }
-    let r; try { r = rstcMerge(mt, t); } catch (e) { throw new Error(o.name + ': ' + e.message); }
-    mt = r.tab; merged.push(`raised ${r.raised}, added ${r.added} from ${o.name}`);
-  }
-  done.set(RS, yaz0Raw(mt));
-  // EventFlow: only the listed new flows go in (the port's 2.x-era copies of 3.0.3 flows hang the load). The UnitIcon models
-  // ('with_fix') overflow a fixed game heap and crash ACNH 3.0.3 at the title unless the memory fix is installed, so they go in
-  // only with it. A patch without 'with_fix' predates the fix and keeps them out; one without 'messages' predates the label
-  // fix of the other Message sarcs, so it keeps those out too.
-  const BAD = patch.with_fix ? /^EventFlow\// : patch.messages ? /^(EventFlow\/|Model\/UnitIcon)/ : /^(EventFlow\/|Model\/UnitIcon|Message\/(?!String_USen))/;
-  const needFix = new Set(fix ? [] : patch.with_fix || []);
-  const EF = patch.eventflow, okFlow = new Set((EF ? EF.flows : []).map(f => 'EventFlow/' + f + '.bfevfl'));
-  if (EF) {   // 3.0.3's Info byml plus the port's additions: put back the 3.0.3 values of the entries the port changed
-    const d = await get(EF.file);
-    if (await sha256(d) !== EF.in_sha256) throw new Error(EF.file + ' is not the one from ' + patch.release + '. The patch only fits that release.');
-    const m = bymlRead(d); for (const [k, x] of Object.entries(EF.revert)) Object.assign(m[k], x);
-    const o = bymlWrite(m); if (await sha256(o) !== EF.out_sha256) throw new Error(EF.file + ' came out wrong. Please open an issue.');
-    done.set(EF.file, o);
-  }
-  const drop = new Set(patch.drop), out = `atmosphere/contents/${TID}/romfs/`, entries = [];
-  for (const name of [...files.keys()].filter(k => k.startsWith(base)).sort()) {
-    const r = name.slice(base.length); if (drop.has(r) || needFix.has(r) || done.has(r) || (BAD.test(r) && !okFlow.has(r))) continue;
-    entries.push([out + r, await files.get(name)()]);
-  }
-  for (const [r, d] of done) entries.push([out + r, d]);
-  return { zip: writeZip(entries), romfs: entries.length, merged, icons: (patch.with_fix || []).length - needFix.size };
+  const base = key.slice(0, -'Bcsv/ItemParam.bcsv'.length), out = `atmosphere/contents/${TID}/romfs/`, entries = [];
+  for (const name of [...files.keys()].filter(k => k.startsWith(base)).sort()) entries.push([out + name.slice(base.length), await files.get(name)()]);
+  return { zip: writeZip(entries), romfs: entries.length };
 }
+
 
 // The memory fix: its own small mod, one IPS for ACNH 3.0.3's main (build ff1d1c05...). It makes the game's fixed
 // draw-array heap bigger and grows its parent heap by the same amount, out of memory the game leaves unused. Same bytes
@@ -498,25 +276,23 @@ const MEMFIX = { name: 'acnh-memory-fix-peanuts.zip', set: 'acnh-memory-fix', bu
                  ips: 'SVBTMzIBVjygAAQAgKBSBATXeAAEAABwJkVFT0Y=' };
 const memFixZip = () => writeZip([[`atmosphere/exefs_patches/${MEMFIX.set}/${MEMFIX.build_id}.ips`, unb64(MEMFIX.ips)]]);
 
-// Cheap check used when a file is picked: is this the port's download that the patch fits? Throws a friendly message if not.
-// A .7z is taken on trust (unpacking it takes seconds; build() checks every file again). A zip is checked by its ItemParam.
-async function check(modBytes, patch) {
-  if (patch.format !== 1 || patch.tid !== TID) throw new Error('That is not the jub-port-patch.json file.');
+
+// Cheap check used when a file is picked: is this the port's download? (patch is unused; the page still passes the one it fetched.)
+// A .7z is taken on trust (unpacking it takes seconds; build() checks again). A zip is checked by its ItemParam.
+async function check(modBytes) {
   const m = modBytes;
-  if (m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C) return `Jubbsticks' Additions port ${patch.release.replace(/^UJAP-/, '')}`;
-  const files = await readZip(m);
-  const key = [...files.keys()].find(n => n.endsWith('romfs/Bcsv/ItemParam.bcsv'));
-  if (!key) throw new Error('No romfs/Bcsv/ItemParam.bcsv in that file. Pick the Atmosphere download of the port (not the Emulator one).');
-  const EF = patch.eventflow, f = EF && files.get(key.slice(0, -'Bcsv/ItemParam.bcsv'.length) + EF.file);   // the port's own, unedited info file
-  if (EF && (!f || await sha256(await f()) !== EF.in_sha256))
-    throw new Error('This is not the port ' + patch.release + ' (the patch only fits that release). If it is another mod, add it under "Using other mods too".');
-  return `Jubbsticks' Additions port ${patch.release.replace(/^UJAP-/, '')}`;
+  if (!(m[0] === 0x37 && m[1] === 0x7A && m[2] === 0xBC && m[3] === 0xAF && m[4] === 0x27 && m[5] === 0x1C)) {
+    if (!(m[0] === 0x50 && m[1] === 0x4B)) throw new Error("That is not the port's download. Pick the Atmosphere .7z from the port's Releases.");
+    const files = await readZip(m);
+    if (![...files.keys()].some(n => n.endsWith('romfs/Bcsv/ItemParam.bcsv'))) throw new Error('No romfs/Bcsv/ItemParam.bcsv in that file. Pick the Atmosphere download of the port (not the Emulator one).');
+  }
+  return "Jubbsticks' Additions port";
 }
 
-// What the page calls: one zip out (fzstd is the global the page loads before this file).
+// What the page calls: one zip out. The patch and o arguments are ignored.
 async function make(modBytes, patch, o = {}) {
-  const fix = o.fix !== false, r = await build(modBytes, patch, d => fzstd.decompress(d), o.others || [], fix);
-  return { zip: r.zip, note: `${r.romfs} files` + (r.merged.length ? '. Size table: ' + r.merged.join('; ') : '') + (fix ? '' : '. The new fruit and gems have no icons without the memory fix') };
+  const r = await build(modBytes);
+  return { zip: r.zip, note: `${r.romfs} files` };
 }
 
-if (typeof module !== 'undefined') module.exports = { build, check, make, writeZip, MEMFIX, memFixZip, yaz0Dec, rstcParse, rstcMerge, readZip, read7z, yaz0Raw, inflateRaw, unb64, cat, utf8, u32 };
+if (typeof module !== 'undefined') module.exports = { build, check, make, writeZip, MEMFIX, memFixZip, readZip, read7z, crc32, unb64, cat, utf8, u32 };

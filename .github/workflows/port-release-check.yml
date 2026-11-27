@@ -1,0 +1,60 @@
+# Once a day: build the port's latest release through docs/engine.js (the same code as the page) and keep one issue here while the
+# build throws or an output file is bigger than its entry in the output's size table. It only reads the port's repo; it never
+# posts there. The audit (tools/audit_port.py) needs vanilla game files, so it stays a local step.
+name: Port release check
+on:
+  schedule:
+    - cron: '23 14 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: port-release-check
+  cancel-in-progress: false
+env:
+  PORT: dragonloverlord/Unnofficial-Jubbsticks-Additions-Port
+  TITLE: Port release check
+  GH_TOKEN: ${{ github.token }}
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download the port's latest release
+        run: |
+          mkdir -p "$RUNNER_TEMP/rc"; cd "$RUNNER_TEMP/rc"
+          gh api "repos/$PORT/releases/latest" --jq .tag_name > tag
+          gh release download "$(cat tag)" --repo "$PORT" --pattern '*Atmosphere*.7z' --output port.7z
+      - name: Build it and check the sizes
+        run: |
+          cd "$RUNNER_TEMP/rc"
+          if node "$GITHUB_WORKSPACE/test/run.mjs" port.7z > log.txt 2>&1; then echo ok > clean; else rm -f clean; fi
+          {
+            echo "Port release \`$(cat tag)\`, built through docs/engine.js."
+            echo
+            if [ -f clean ]; then echo "The build works and every output file fits its size entry."; else echo "The build failed or a file is bigger than its size entry:"; fi
+            echo
+            echo '```'
+            head -c 50000 log.txt
+            echo '```'
+          } > body.md
+          head -c 59000 body.md > body.cut && mv body.cut body.md
+          cat body.md
+      - name: Open, update or close the issue
+        run: |
+          cd "$RUNNER_TEMP/rc"
+          n=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$TITLE\" in:title" --json number,title \
+              --jq "map(select(.title | startswith(\"$TITLE\")))[0].number // empty")
+          if [ -f clean ]; then
+            if [ -n "$n" ]; then gh issue close "$n" --repo "$GITHUB_REPOSITORY" --comment "$(cat body.md)"; fi
+          elif [ -n "$n" ]; then
+            gh issue edit "$n" --repo "$GITHUB_REPOSITORY" --title "$TITLE: $(cat tag)" --body-file body.md
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE: $(cat tag)" --body-file body.md
+          fi
